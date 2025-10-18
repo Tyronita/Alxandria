@@ -696,15 +696,23 @@ async def push_to_kaggle(request: NotebookRequest):
         safe_topic = request.topic.lower()
         safe_topic = ''.join(c if c.isalnum() else '-' for c in safe_topic)
         # Remove leading/trailing hyphens and collapse multiple hyphens
-        safe_topic = '-'.join(filter(None, safe_topic.split('-')))[:50]
+        safe_topic = '-'.join(filter(None, safe_topic.split('-')))
+        
+        # Shorten to avoid Kaggle API issues - keep under 40 chars total
+        if len(safe_topic) > 30:
+            safe_topic = safe_topic[:30].rstrip('-')
+        
+        # Add timestamp to make it unique and avoid conflicts
+        import time
+        timestamp = str(int(time.time()))[-6:]  # Last 6 digits of timestamp
         
         # Always create a new kernel with matching title and slug
-        kernel_slug = f"alexandria-{safe_topic}"
+        kernel_slug = f"alexandria-{safe_topic}-{timestamp}"
         kernel_id = f"{kaggle_username}/{kernel_slug}"
         
         # Create title that will convert to the same slug
         # Kaggle will convert "Alexandria Topic Name" -> "alexandria-topic-name"
-        kernel_title = f"Alexandria {safe_topic.replace('-', ' ').title()}"[:80]
+        kernel_title = f"Alexandria {safe_topic.replace('-', ' ').title()} {timestamp}"[:80]
         
         # Create temp directory for kernel
         with tempfile.TemporaryDirectory() as temp_dir:
