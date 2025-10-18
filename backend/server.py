@@ -767,8 +767,7 @@ async def push_to_kaggle(request: NotebookRequest):
                     "message": "Notebook pushed to Kaggle successfully!",
                     "kaggle_link": kaggle_link,
                     "kernel_slug": kernel_slug,
-                    "username": kaggle_username,
-                    "is_update": has_kernels
+                    "username": kaggle_username
                 }
                 
             except subprocess.TimeoutExpired:
