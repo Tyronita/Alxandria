@@ -328,10 +328,13 @@ def run_all_tests():
     # Test 5: Research Step 4 (Implementation Plan)
     results["step4"] = test_research_step(4, ["implementation", "plan", "strategy"])
     
-    # Test 6: Push to Kaggle (main feature)
-    results["kaggle_push"] = test_push_to_kaggle()
+    # Test 6: Push to Kaggle with REAL dataset (main feature)
+    results["kaggle_push_with_dataset"] = test_push_to_kaggle(DATASET_NAME)
     
-    # Test 7: Notebook Download Verification (critical test)
+    # Test 7: Push to Kaggle without dataset (alternative test)
+    results["kaggle_push_no_dataset"] = test_push_to_kaggle("")
+    
+    # Test 8: Notebook Download Verification (critical test)
     results["notebook_verification"] = test_notebook_download_verification()
     
     # Summary
