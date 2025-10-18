@@ -717,15 +717,11 @@ async def push_to_kaggle(request: NotebookRequest):
                 "kernel_sources": []
             }
             
-            # Try to extract dataset slug from dataset_name
-            if request.dataset_name:
-                # Format: owner/dataset-name or just dataset-name
-                dataset_slug = request.dataset_name.strip()
-                if '/' not in dataset_slug:
-                    # If no owner, might be a Kaggle competition or public dataset
-                    # We'll try to use it as-is
-                    pass
-                metadata["dataset_sources"].append(dataset_slug)
+            # Only add dataset if it has proper format (username/dataset-name)
+            if request.dataset_name and '/' in request.dataset_name:
+                metadata["dataset_sources"].append(request.dataset_name)
+            else:
+                logging.info(f"Skipping dataset link - invalid format: {request.dataset_name}")
             
             # Write metadata file
             with open(metadata_path, 'w') as f:
