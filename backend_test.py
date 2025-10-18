@@ -112,16 +112,17 @@ def test_research_step(step_num, expected_content_keywords=None):
         log_test(f"Research Step {step_num}", "FAIL", f"Exception: {str(e)}")
         return False
 
-def test_push_to_kaggle():
+def test_push_to_kaggle(dataset_name=None):
     """Test POST /api/ship/push-to-kaggle endpoint"""
     try:
         payload = {
             "session_id": SESSION_ID,
             "topic": TOPIC,
-            "dataset_name": DATASET_NAME
+            "dataset_name": dataset_name or DATASET_NAME
         }
         
-        print(f"    Pushing to Kaggle... (may take 5-10 seconds)")
+        dataset_info = f"with dataset '{dataset_name or DATASET_NAME}'" if (dataset_name or DATASET_NAME) else "without dataset"
+        print(f"    Pushing to Kaggle {dataset_info}... (may take 5-10 seconds)")
         response = requests.post(f"{BASE_URL}/ship/push-to-kaggle", 
                                json=payload, 
                                timeout=30)
