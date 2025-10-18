@@ -733,7 +733,14 @@ async def push_to_kaggle(request: NotebookRequest):
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
             
-            # Push to Kaggle using CLI
+            # Initialize kernel metadata first, then push
+            logging.info(f"Initializing kernel metadata for: {kernel_slug}")
+            init_result = run_kaggle_command([
+                'kaggle', 'kernels', 'init', '-p', temp_dir
+            ])
+            logging.info(f"Init result: {init_result}")
+            
+            # Now push to Kaggle using CLI
             logging.info(f"Pushing kernel to Kaggle: {kernel_slug}")
             result = run_kaggle_command([
                 'kaggle', 'kernels', 'push', '-p', temp_dir
