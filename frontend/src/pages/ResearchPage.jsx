@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ArrowRight, ExternalLink, Loader2, CheckCircle2, Download, FileText, Package } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Loader2, CheckCircle2, Download, FileText, Package, Rocket } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
