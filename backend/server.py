@@ -704,10 +704,11 @@ async def push_to_kaggle(request: NotebookRequest):
             with open(notebook_path, 'w') as f:
                 json.dump(notebook, f, indent=2)
             
-            # Create kernel metadata - for new kernels, don't specify id
+            # Create kernel metadata - use slug field for new kernels
             # Title should resolve to the same slug to avoid 409 conflicts
             title = kernel_slug.replace('-', ' ').title()
             metadata = {
+                "slug": kernel_slug,  # Use slug instead of id for new kernels
                 "title": title,  # Title should match slug format
                 "code_file": "notebook.ipynb",
                 "language": "python",
