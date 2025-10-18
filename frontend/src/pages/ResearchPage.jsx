@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ArrowRight, ExternalLink, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Loader2, CheckCircle2, Download, FileText, Package } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -17,7 +17,7 @@ const STEPS = [
   { num: 2, label: 'Research Gaps', icon: '💡' },
   { num: 3, label: 'Select Dataset', icon: '📊' },
   { num: 4, label: 'Implementation', icon: '⚙️' },
-  { num: 5, label: 'Kaggle Setup', icon: '🚀' }
+  { num: 5, label: 'Ready to Ship', icon: '🚀' }
 ];
 
 export default function ResearchPage() {
@@ -80,6 +80,54 @@ export default function ResearchPage() {
   const handleDatasetSelect = (datasetName) => {
     setSelectedDataset(datasetName);
     toast.success(`Selected: ${datasetName}`);
+  };
+
+  const handleDownloadNotebook = async () => {
+    try {
+      const response = await axios.post(
+        `${API}/ship/notebook`,
+        {
+          session_id: sessionId,
+          topic: topic,
+          dataset_name: selectedDataset || 'dataset'
+        },
+        { responseType: 'blob' }
+      );
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `alexandria_${topic.replace(/\s+/g, '_')}.ipynb`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast.success('Notebook downloaded!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download notebook');
+    }
+  };
+
+  const handleDownloadRequirements = async () => {
+    try {
+      const response = await axios.get(`${API}/ship/requirements`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'requirements.txt');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast.success('requirements.txt downloaded!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download requirements');
+    }
   };
 
   const currentData = stepData[currentStep];
@@ -222,6 +270,37 @@ export default function ResearchPage() {
                         </div>
                       </Card>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Download Buttons on Step 5 */}
+              {currentStep === 5 && (
+                <div className="mt-8 pt-8 border-t">
+                  <h3 className="text-lg font-semibold mb-4">🚀 Download Your Project</h3>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Button
+                      onClick={handleDownloadNotebook}
+                      className="h-20 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      data-testid="download-notebook-btn"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Download className="w-6 h-6" />
+                        <span>Download Notebook</span>
+                      </div>
+                    </Button>
+                    
+                    <Button
+                      onClick={handleDownloadRequirements}
+                      variant="outline"
+                      className="h-20 border-2"
+                      data-testid="download-requirements-btn"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <FileText className="w-6 h-6" />
+                        <span>Download requirements.txt</span>
+                      </div>
+                    </Button>
                   </div>
                 </div>
               )}
