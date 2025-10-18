@@ -702,14 +702,13 @@ async def push_to_kaggle(request: NotebookRequest):
         except:
             has_kernels = False
         
-        if has_kernels:
-            # Update strategy: Use a dedicated "Alexandria" kernel that gets updated each time
-            kernel_slug = "alexandria-research-notebook"  # Fixed slug for updates
-            kernel_id = f"{kaggle_username}/{kernel_slug}"
-        else:
-            # Fallback to new kernel attempt
-            kernel_slug = f"alexandria-{safe_topic}"
-            kernel_id = f"{kaggle_username}/{kernel_slug}"
+        # Always create a new kernel with matching title and slug
+        kernel_slug = f"alexandria-{safe_topic}"
+        kernel_id = f"{kaggle_username}/{kernel_slug}"
+        
+        # Create title that matches the slug (Kaggle requirement)
+        # Title must generate the same slug when converted
+        kernel_title = f"Alexandria {request.topic.title()}"[:80]
         
         # Create temp directory for kernel
         with tempfile.TemporaryDirectory() as temp_dir:
