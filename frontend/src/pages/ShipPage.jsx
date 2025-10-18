@@ -428,9 +428,42 @@ def evaluate(model, dataloader, device):
                 Publish to Kaggle
               </h2>
               
+              {!kaggleCredentials ? (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 mb-3">
+                    Set up your Kaggle API credentials to publish notebooks
+                  </p>
+                  <Button
+                    onClick={() => setShowKaggleSetup(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Setup Kaggle API
+                  </Button>
+                </div>
+              ) : (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-800">
+                        Connected as <strong>{kaggleCredentials.username}</strong>
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setShowKaggleSetup(true)}
+                      className="text-xs text-green-700 hover:text-green-900 underline"
+                    >
+                      Change
+                    </button>
+                  </div>
+                </div>
+              )}
+              
               <Button
                 onClick={handlePushToKaggle}
-                disabled={pushing || !!kaggleLink}
+                disabled={pushing || !!kaggleLink || !kaggleCredentials}
                 className="w-full h-16 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 mb-4"
                 data-testid="push-kaggle-btn"
               >
