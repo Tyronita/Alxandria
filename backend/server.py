@@ -688,27 +688,23 @@ async def push_to_kaggle(request: NotebookRequest):
         # Generate notebook with ALL research data
         notebook = await generate_notebook_from_research(request.session_id, request.topic, request.dataset_name)
         
-        # Create safe kernel slug
-        safe_topic = request.topic.lower().replace(' ', '-').replace('_', '-')[:50]
-        safe_topic = ''.join(c for c in safe_topic if c.isalnum() or c == '-')
-        
-        # IMPORTANT: Kaggle API often blocks NEW kernel creation (403 Forbidden)
-        # Instead, we'll update an existing kernel or provide manual upload instructions
-        
-        # Try to get user's existing kernels
-        try:
-            result = run_kaggle_command(['kaggle', 'kernels', 'list', '--mine'])
-            has_kernels = 'evanoleary/' in result
-        except:
-            has_kernels = False
+        # Create safe kernel slug - Kaggle converts title to slug by:
+        # 1. Lowercasing
+        # 2. Replacing spaces/special chars with hyphens
+        # 3. Removing trailing/leading hyphens
+        # 4. Collapsing multiple hyphens
+        safe_topic = request.topic.lower()
+        safe_topic = ''.join(c if c.isalnum() else '-' for c in safe_topic)
+        # Remove leading/trailing hyphens and collapse multiple hyphens
+        safe_topic = '-'.join(filter(None, safe_topic.split('-')))[:50]
         
         # Always create a new kernel with matching title and slug
         kernel_slug = f"alexandria-{safe_topic}"
         kernel_id = f"{kaggle_username}/{kernel_slug}"
         
-        # Create title that matches the slug (Kaggle requirement)
-        # Title must generate the same slug when converted
-        kernel_title = f"Alexandria {request.topic.title()}"[:80]
+        # Create title that will convert to the same slug
+        # Kaggle will convert "Alexandria Topic Name" -> "alexandria-topic-name"
+        kernel_title = f"Alexandria {safe_topic.replace('-', ' ').title()}"[:80]
         
         # Create temp directory for kernel
         with tempfile.TemporaryDirectory() as temp_dir:
