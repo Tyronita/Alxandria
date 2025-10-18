@@ -233,7 +233,7 @@ Provide working links. Include Kaggle competitions if they exist."""
         
         elif request.step == 4:
             # STEP 4: Implementation Plan (after dataset selection)
-            selected_dataset = request.selected_data.get('dataset_name', 'selected dataset')
+            selected_dataset = request.selected_data.get('dataset_name', 'selected dataset') if request.selected_data else 'selected dataset'
             
             system_prompt = f"""You are Alexandria. Create implementation plan for {selected_dataset}:
 
