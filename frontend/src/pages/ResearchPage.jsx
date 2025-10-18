@@ -45,7 +45,7 @@ export default function ResearchPage() {
         session_id: sessionId,
         topic: topicOverride || topic,
         step: step,
-        selected_data: step === 4 ? { dataset_name: selectedDataset } : null
+        selected_data: (step === 4 || step === 5) && selectedDataset ? { dataset_name: selectedDataset } : null
       });
 
       setStepData(prev => ({
