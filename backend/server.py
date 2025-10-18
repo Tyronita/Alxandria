@@ -705,9 +705,11 @@ async def push_to_kaggle(request: NotebookRequest):
                 json.dump(notebook, f, indent=2)
             
             # Create kernel metadata - all fields required for Kaggle API
+            # Title should resolve to the same slug to avoid 409 conflicts
+            title = kernel_slug.replace('-', ' ').title()
             metadata = {
                 "id": f"{kaggle_username}/{kernel_slug}",  # Required format: username/slug
-                "title": f"Alexandria: {request.topic}",
+                "title": title,  # Title should match slug format
                 "code_file": "notebook.ipynb",
                 "language": "python",
                 "kernel_type": "notebook",
