@@ -353,11 +353,33 @@ def run_all_tests():
     # Test 5: Research Step 4 (Implementation Plan)
     results["step4"] = test_research_step(4, ["implementation", "plan", "strategy"])
     
-    # Test 6: Push to Kaggle with REAL dataset (main feature)
-    results["kaggle_push_with_dataset"] = test_push_to_kaggle(DATASET_NAME)
+    # Test 6: Push to Kaggle with empty dataset (as requested in review)
+    kaggle_link = None
+    kaggle_push_result = test_push_to_kaggle(DATASET_NAME)
+    results["kaggle_push"] = kaggle_push_result
     
-    # Test 7: Push to Kaggle without dataset (alternative test)
-    results["kaggle_push_no_dataset"] = test_push_to_kaggle("")
+    # Extract kaggle_link for verification if push was successful
+    if kaggle_push_result:
+        try:
+            payload = {
+                "session_id": SESSION_ID,
+                "topic": TOPIC,
+                "dataset_name": DATASET_NAME
+            }
+            response = requests.post(f"{BASE_URL}/ship/push-to-kaggle", 
+                                   json=payload, timeout=30)
+            if response.status_code == 200:
+                data = response.json()
+                kaggle_link = data.get("kaggle_link")
+        except:
+            pass
+    
+    # Test 7: CRITICAL - Verify Kaggle link actually works (200 not 404)
+    if kaggle_link:
+        results["kaggle_link_verification"] = test_kaggle_link_verification(kaggle_link)
+    else:
+        results["kaggle_link_verification"] = False
+        log_test("Kaggle Link Verification", "FAIL", "No Kaggle link to verify")
     
     # Test 8: Notebook Download Verification (critical test)
     results["notebook_verification"] = test_notebook_download_verification()
