@@ -702,11 +702,12 @@ async def push_to_kaggle(request: NotebookRequest):
             with open(notebook_path, 'w') as f:
                 json.dump(notebook, f, indent=2)
             
-            # Create kernel metadata with proper slug format for new kernels
+            # Create kernel metadata with proper format for new kernels
             metadata = {
                 "id": f"{kaggle_username}/{kernel_slug}",  # Required format: username/kernel-slug
                 "title": f"Alexandria: {request.topic[:80]}",  # Limit title length
                 "code_file": "notebook.ipynb",
+                "language": "python",  # Required field - valid options: python, r, rmarkdown
                 "kernel_type": "notebook",
                 "is_private": False,
                 "enable_gpu": True,
