@@ -10,11 +10,11 @@ import time
 import sys
 from datetime import datetime
 
-# Configuration - Using parameters from review request
+# Configuration - Using EXACT parameters from review request
 BASE_URL = "https://notebook-forge-1.preview.emergentagent.com/api"
-SESSION_ID = "real-kaggle-test-789"
-TOPIC = "digit recognition using neural networks"
-DATASET_NAME = "rtatman/english-word-frequency"
+SESSION_ID = "final-phone-verified-test"
+TOPIC = "mnist digit recognition"
+DATASET_NAME = ""  # Empty dataset as requested
 
 def log_test(test_name, status, details=""):
     """Log test results with timestamp"""
