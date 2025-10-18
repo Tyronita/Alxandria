@@ -2,58 +2,67 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Search, BookOpen, Target, Lightbulb, Sparkles, Database, Code } from 'lucide-react';
+import { ArrowRight, Sparkles, Brain, Microscope, Shield, MessageSquare, Zap, TrendingUp } from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
-  const features = [
+  const researchAreas = [
     {
-      icon: <Search className="w-6 h-6" />,
-      title: "Intelligent Research",
-      description: "Transform curiosity into structured research with AI-powered insights"
+      icon: <MessageSquare className="w-6 h-6" />,
+      title: "NLP & Translation",
+      color: "from-purple-500 to-pink-500",
+      examples: ["Neural MT", "Multilingual Models", "Low-resource Languages"]
     },
     {
-      icon: <BookOpen className="w-6 h-6" />,
-      title: "SOTA Reviews",
-      description: "Access academic literature and cutting-edge research findings"
+      icon: <Microscope className="w-6 h-6" />,
+      title: "Medical AI",
+      color: "from-green-500 to-emerald-500",
+      examples: ["Disease Classification", "Radiology AI", "Drug Discovery"]
     },
     {
-      icon: <Target className="w-6 h-6" />,
-      title: "Task Specifications",
-      description: "Generate precise, actionable task specs with metrics and constraints"
+      icon: <Shield className="w-6 h-6" />,
+      title: "Security & Fraud",
+      color: "from-red-500 to-orange-500",
+      examples: ["Anomaly Detection", "Transaction Fraud", "Cybersecurity"]
     },
     {
-      icon: <Lightbulb className="w-6 h-6" />,
-      title: "Technique Discovery",
-      description: "Find proven techniques from Kaggle, GitHub, and research papers"
+      icon: <Brain className="w-6 h-6" />,
+      title: "Computer Vision",
+      color: "from-blue-500 to-cyan-500",
+      examples: ["Object Detection", "Image Segmentation", "Video Understanding"]
     },
     {
-      icon: <Database className="w-6 h-6" />,
-      title: "Kaggle Integration",
-      description: "Explore datasets and competitions directly from the platform"
+      icon: <Zap className="w-6 h-6" />,
+      title: "Reinforcement Learning",
+      color: "from-yellow-500 to-amber-500",
+      examples: ["Game AI", "Robotics", "Autonomous Systems"]
     },
     {
-      icon: <Code className="w-6 h-6" />,
-      title: "Evidence-Based",
-      description: "Every recommendation backed by citations and real-world examples"
+      icon: <TrendingUp className="w-6 h-6" />,
+      title: "Time Series & Finance",
+      color: "from-indigo-500 to-purple-500",
+      examples: ["Stock Prediction", "Forecasting", "Risk Analysis"]
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       {/* Header */}
-      <header className="border-b bg-white/70 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b bg-white/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">ResearchAI</span>
+            <div>
+              <span className="text-xl font-bold text-gray-900">ResearchAI</span>
+              <div className="text-xs text-gray-500">Powered by Perplexity</div>
+            </div>
           </div>
           <Button 
             onClick={() => navigate('/research')}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
             data-testid="nav-research-btn"
           >
             Start Research
@@ -63,102 +72,112 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-20 pb-16">
+      <section className="max-w-7xl mx-auto px-6 pt-20 pb-12">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full text-sm font-medium mb-8 shadow-sm">
             <Sparkles className="w-4 h-4" />
-            Powered by Perplexity AI
+            Interactive Multi-Turn Research Assistant
           </div>
           
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-            From Curiosity to
-            <span className="block bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-              Research Excellence
+            From Idea to
+            <span className="block bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Research Blueprint
             </span>
           </h1>
           
-          <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-            AI-powered research assistant that transforms your ideas into structured research, 
-            complete with citations, task specs, and actionable recommendations.
+          <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+            Interactive AI assistant that guides you through a conversational journey - from selecting your interests 
+            to crafting a cutting-edge ML research proposal with citations and actionable plans.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg"
               onClick={() => navigate('/research')}
-              className="bg-blue-600 hover:bg-blue-700 text-base px-8 py-6"
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-base px-8 py-6 shadow-xl"
               data-testid="hero-start-btn"
             >
-              Start Research
+              Begin Your Research Journey
               <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            <Button 
-              size="lg"
-              variant="outline"
-              className="border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-base px-8 py-6"
-              data-testid="learn-more-btn"
-            >
-              Learn More
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
+      {/* Research Areas Grid */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Everything You Need for Research
+            Explore Cutting-Edge Research Areas
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Comprehensive research toolkit powered by Perplexity's advanced AI and real-time web search
+            Choose from curated ML research domains with pre-generated ideas and expert guidance
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
+          {researchAreas.map((area, index) => (
             <Card 
               key={index} 
-              className="p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white border-gray-200"
-              data-testid={`feature-card-${index}`}
+              className="group p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-white border-2 border-gray-100 cursor-pointer"
+              onClick={() => navigate('/research', { state: { selectedArea: area.title } })}
+              data-testid={`area-card-${index}`}
             >
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-4">
-                {feature.icon}
+              <div className={`w-14 h-14 bg-gradient-to-br ${area.color} rounded-xl flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                {area.icon}
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {feature.title}
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                {area.title}
               </h3>
-              <p className="text-gray-600">
-                {feature.description}
-              </p>
+              <div className="flex flex-wrap gap-2">
+                {area.examples.map((example, idx) => (
+                  <span key={idx} className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
+                    {example}
+                  </span>
+                ))}
+              </div>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <Card className="bg-gradient-to-br from-blue-600 to-cyan-500 p-12 text-center text-white border-0">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Ready to Transform Your Research?
-          </h2>
-          <p className="text-xl mb-8 text-blue-100 max-w-2xl mx-auto">
-            Start exploring with AI-powered insights, citations, and recommendations
-          </p>
-          <Button 
-            size="lg"
-            onClick={() => navigate('/research')}
-            className="bg-white text-blue-600 hover:bg-gray-50 text-base px-8 py-6"
-            data-testid="cta-start-btn"
-          >
-            Get Started Now
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </Card>
+      {/* Features Section */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-3xl p-12 text-white shadow-2xl">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+              How It Works
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8 mt-12">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                  1
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Share Your Interests</h3>
+                <p className="text-white/80 text-sm">Tell us about your ML interests, frameworks, and cutting-edge topics you want to explore</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                  2
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Conversational Refinement</h3>
+                <p className="text-white/80 text-sm">Multi-turn AI chat helps refine your idea with grounded research and expert insights</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                  3
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Research Blueprint</h3>
+                <p className="text-white/80 text-sm">Get a complete research plan with citations, task specs, and actionable next steps</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-gray-50 py-8">
+      <footer className="border-t bg-gray-50 py-8 mt-16">
         <div className="max-w-7xl mx-auto px-6 text-center text-gray-600">
           <p>Built for Perplexity Hackathon 2025 • Powered by Perplexity AI + Kaggle</p>
         </div>

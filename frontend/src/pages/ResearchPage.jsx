@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, 
-  Search, 
-  BookOpen, 
-  Target, 
-  Lightbulb, 
   Sparkles,
-  ExternalLink,
+  Send,
   Loader2,
-  AlertCircle,
-  CheckCircle2
+  ExternalLink,
+  Lightbulb,
+  MessageSquare,
+  ChevronRight,
+  Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,124 +25,189 @@ const API = `${BACKEND_URL}/api`;
 
 export default function ResearchPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('refine');
-  const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  const messagesEndRef = useRef(null);
   
-  // Results state
-  const [refineResult, setRefineResult] = useState(null);
-  const [taskSpec, setTaskSpec] = useState(null);
-  const [sotaReview, setSotaReview] = useState(null);
-  const [techniques, setTechniques] = useState(null);
-  const [recommendation, setRecommendation] = useState(null);
+  // Wizard state
+  const [step, setStep] = useState('form'); // 'form', 'ideas', 'chat'
+  
+  // Form state
+  const [interests, setInterests] = useState([]);
+  const [frameworks, setFrameworks] = useState([]);
+  const [cuttingEdge, setCuttingEdge] = useState([]);
+  const [customInterest, setCustomInterest] = useState('');
+  const [customFramework, setCustomFramework] = useState('');
+  const [customCuttingEdge, setCustomCuttingEdge] = useState('');
+  
+  // Chat state
+  const [messages, setMessages] = useState([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
+  
+  // Ideas state
+  const [generatedIdeas, setGeneratedIdeas] = useState([]);
+  const [selectedIdea, setSelectedIdea] = useState(null);
 
-  const handleRefineResearch = async () => {
-    if (!query.trim()) {
-      toast.error('Please enter a research query');
+  const researchAreas = [
+    'Natural Language Processing',
+    'Medical Imaging & Disease Classification',
+    'Fraud Detection & Security',
+    'Computer Vision',
+    'Reinforcement Learning',
+    'Time Series Forecasting',
+    'Generative AI',
+    'Multimodal Learning'
+  ];
+
+  const frameworkOptions = [
+    'PyTorch',
+    'TensorFlow',
+    'JAX',
+    'Hugging Face Transformers',
+    'LangChain',
+    'FastAPI',
+    'scikit-learn',
+    'XGBoost'
+  ];
+
+  const cuttingEdgeTopics = [
+    'Large Language Models (LLMs)',
+    'Diffusion Models',
+    'Retrieval Augmented Generation (RAG)',
+    'Few-shot Learning',
+    'Federated Learning',
+    'Neural Architecture Search',
+    'Explainable AI (XAI)',
+    'Quantum Machine Learning'
+  ];
+
+  useEffect(() => {
+    if (location.state?.selectedArea) {
+      // Pre-select area from landing page
+      const area = researchAreas.find(a => location.state.selectedArea.includes(a.split(' ')[0]));
+      if (area) setInterests([area]);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const toggleSelection = (item, list, setList) => {
+    if (list.includes(item)) {
+      setList(list.filter(i => i !== item));
+    } else {
+      setList([...list, item]);
+    }
+  };
+
+  const addCustom = (value, list, setList, setClear) => {
+    if (value.trim()) {
+      setList([...list, value.trim()]);
+      setClear('');
+    }
+  };
+
+  const handleGenerateIdeas = async () => {
+    if (interests.length === 0) {
+      toast.error('Please select at least one area of interest');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/research/refine`, {
-        query: query,
-        domain_filter: ['arxiv.org', 'github.com', 'kaggle.com', 'huggingface.co']
+      const response = await axios.post(`${API}/chat/generate-ideas`, {
+        interests,
+        frameworks,
+        cutting_edge: cuttingEdge
       });
       
-      setRefineResult(response.data);
-      toast.success('Research refined successfully!');
-      setActiveTab('results');
+      setGeneratedIdeas(response.data.ideas || []);
+      setStep('ideas');
+      toast.success('Research ideas generated!');
     } catch (error) {
-      console.error('Error refining research:', error);
-      toast.error('Failed to refine research. Please try again.');
+      console.error('Error generating ideas:', error);
+      toast.error('Failed to generate ideas');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGenerateTaskSpec = async () => {
-    if (!refineResult?.query_id) {
-      toast.error('Please refine your research first');
-      return;
-    }
+  const startChat = (idea = null) => {
+    const convId = Date.now().toString();
+    setConversationId(convId);
+    setSelectedIdea(idea);
+    
+    const initialMessage = {
+      role: 'assistant',
+      content: idea 
+        ? `Great choice! Let's refine this idea: "${idea.title}". ${idea.description}\n\nWhat specific aspect interests you most? Or would you like to explore a different angle?`
+        : `Hi! I'm your AI research assistant. Based on your interests in ${interests.join(', ')}, let's craft a cutting-edge research idea together. What problem or challenge would you like to tackle?`,
+      timestamp: new Date().toISOString()
+    };
+    
+    setMessages([initialMessage]);
+    setStep('chat');
+  };
 
+  const sendMessage = async () => {
+    if (!currentMessage.trim() || loading) return;
+
+    const userMessage = {
+      role: 'user',
+      content: currentMessage,
+      timestamp: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setCurrentMessage('');
     setLoading(true);
+
     try {
-      const response = await axios.post(`${API}/research/task-spec`, {
-        query_id: refineResult.query_id
+      const response = await axios.post(`${API}/chat/message`, {
+        conversation_id: conversationId,
+        message: currentMessage,
+        context: {
+          interests,
+          frameworks,
+          cutting_edge: cuttingEdge,
+          selected_idea: selectedIdea
+        },
+        messages: messages
       });
-      
-      setTaskSpec(response.data);
-      toast.success('Task specification generated!');
+
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.data.response,
+        citations: response.data.citations || [],
+        timestamp: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Error generating task spec:', error);
-      toast.error('Failed to generate task specification.');
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+      
+      const errorMessage = {
+        role: 'assistant',
+        content: "I apologize, but I encountered an error. Please try again.",
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGetSOTAReview = async () => {
-    if (!query.trim()) {
-      toast.error('Please enter a research topic');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API}/research/sota-review`, {
-        topic: query,
-        domain_filter: ['arxiv.org', 'nature.com', 'science.org']
-      });
-      
-      setSotaReview(response.data);
-      toast.success('SOTA review generated!');
-    } catch (error) {
-      console.error('Error getting SOTA review:', error);
-      toast.error('Failed to generate SOTA review.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFindTechniques = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API}/research/techniques`, {
-        dataset_type: 'tabular',
-        problem_type: 'classification'
-      });
-      
-      setTechniques(response.data);
-      toast.success('Techniques found!');
-    } catch (error) {
-      console.error('Error finding techniques:', error);
-      toast.error('Failed to find techniques.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGetRecommendation = async () => {
-    if (!refineResult?.query_id) {
-      toast.error('Please refine your research first');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API}/research/recommend`, {
-        query_id: refineResult.query_id,
-        context: 'Machine learning project'
-      });
-      
-      setRecommendation(response.data);
-      toast.success('Recommendation generated!');
-    } catch (error) {
-      console.error('Error getting recommendation:', error);
-      toast.error('Failed to generate recommendation.');
-    } finally {
-      setLoading(false);
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
@@ -153,289 +216,314 @@ export default function ResearchPage() {
       href={citation.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all group"
+      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors"
       data-testid={`citation-${index}`}
     >
-      <Badge variant="secondary" className="mt-1">{index + 1}</Badge>
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900 group-hover:text-blue-600 line-clamp-1">
-          {citation.title}
-        </p>
-        <p className="text-sm text-gray-500 line-clamp-1">{citation.url}</p>
-        {citation.date && (
-          <p className="text-xs text-gray-400 mt-1">{citation.date}</p>
-        )}
-      </div>
-      <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+      <span className="font-medium text-blue-700">[{index + 1}]</span>
+      <ExternalLink className="w-3 h-3 text-blue-600" />
     </a>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       {/* Header */}
-      <header className="border-b bg-white/70 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b bg-white/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate('/')}
-              data-testid="back-to-home-btn"
+              onClick={() => step === 'form' ? navigate('/') : setStep('form')}
+              data-testid="back-btn"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {step === 'form' ? 'Home' : 'Back'}
             </Button>
-            <Separator orientation="vertical" className="h-6" />
+            <div className="h-6 w-px bg-gray-300" />
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-blue-600" />
+              <Sparkles className="w-5 h-5 text-indigo-600" />
               <span className="text-lg font-semibold text-gray-900">Research Assistant</span>
             </div>
+          </div>
+          
+          {/* Progress indicator */}
+          <div className="hidden sm:flex items-center gap-2 text-sm">
+            <Badge variant={step === 'form' ? 'default' : 'secondary'}>1. Interests</Badge>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+            <Badge variant={step === 'ideas' ? 'default' : 'secondary'}>2. Ideas</Badge>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+            <Badge variant={step === 'chat' ? 'default' : 'secondary'}>3. Refine</Badge>
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Query Input */}
-        <Card className="p-6 mb-8 bg-white shadow-sm" data-testid="query-input-card">
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Research Query
-              </label>
-              <Textarea
-                placeholder="Enter your research question or topic (e.g., 'best practices for tabular classification on Kaggle Titanic dataset')..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="min-h-[100px] text-base"
-                data-testid="research-query-input"
-              />
+        {/* STEP 1: Form */}
+        {step === 'form' && (
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-900 mb-3">
+                Tell Us About Your Research Interests
+              </h1>
+              <p className="text-lg text-gray-600">
+                Help us understand what you want to explore
+              </p>
             </div>
-            
-            <div className="flex gap-3">
-              <Button
-                onClick={handleRefineResearch}
-                disabled={loading || !query.trim()}
-                className="bg-blue-600 hover:bg-blue-700"
-                data-testid="refine-research-btn"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Refine Research
-                  </>
-                )}
-              </Button>
-              
-              {refineResult && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={handleGenerateTaskSpec}
-                    disabled={loading}
-                    data-testid="gen-task-spec-btn"
-                  >
-                    <Target className="w-4 h-4 mr-2" />
-                    Generate Task Spec
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={handleGetSOTAReview}
-                    disabled={loading}
-                    data-testid="sota-review-btn"
-                  >
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    SOTA Review
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={handleGetRecommendation}
-                    disabled={loading}
-                    data-testid="get-recommendation-btn"
-                  >
-                    <Lightbulb className="w-4 h-4 mr-2" />
-                    Get Recommendation
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </Card>
 
-        {/* Results Section */}
-        {refineResult && (
-          <div className="space-y-6">
-            {/* Refined Research */}
-            <Card className="p-6 bg-white shadow-sm" data-testid="refined-research-card">
-              <div className="flex items-center gap-2 mb-4">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">Refined Research</h2>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Problem Statement</h3>
-                  <p className="text-gray-800">{refineResult.problem_statement}</p>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">AI Analysis</h3>
-                  <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
-                    {refineResult.raw_content}
-                  </div>
-                </div>
-
-                {refineResult.citations && refineResult.citations.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Sources & Citations</h3>
-                    <div className="space-y-2">
-                      {refineResult.citations.map((citation, idx) => (
-                        <CitationCard key={idx} citation={citation} index={idx} />
-                      ))}
+            {/* Areas of Interest */}
+            <Card className="p-6" data-testid="interests-card">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-indigo-600" />
+                Areas of Interest
+              </h3>
+              <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                {researchAreas.map((area) => (
+                  <div
+                    key={area}
+                    onClick={() => toggleSelection(area, interests, setInterests)}
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      interests.includes(area)
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 hover:border-indigo-300'
+                    }`}
+                    data-testid={`interest-${area}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                        interests.includes(area) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'
+                      }`}>
+                        {interests.includes(area) && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                      <span className="font-medium text-gray-900">{area}</span>
                     </div>
                   </div>
-                )}
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add custom area..."
+                  value={customInterest}
+                  onChange={(e) => setCustomInterest(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addCustom(customInterest, interests, setInterests, setCustomInterest)}
+                  data-testid="custom-interest-input"
+                />
+                <Button 
+                  onClick={() => addCustom(customInterest, interests, setInterests, setCustomInterest)}
+                  variant="outline"
+                >
+                  Add
+                </Button>
               </div>
             </Card>
 
-            {/* Task Specification */}
-            {taskSpec && (
-              <Card className="p-6 bg-white shadow-sm" data-testid="task-spec-card">
-                <div className="flex items-center gap-2 mb-4">
-                  <Target className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">Task Specification</h2>
-                </div>
-                
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Task Name</h3>
-                    <p className="text-gray-800">{taskSpec.task_name}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Target Metric</h3>
-                    <Badge variant="outline" className="text-sm">{taskSpec.target_metric}</Badge>
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Dataset Candidates</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {taskSpec.dataset_candidates.map((dataset, idx) => (
-                        <Badge key={idx} variant="secondary">{dataset}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Deliverables</h3>
-                    <ul className="list-disc list-inside text-gray-700 space-y-1">
-                      {taskSpec.deliverables.map((item, idx) => (
-                        <li key={idx}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-            )}
+            {/* Frameworks */}
+            <Card className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Frameworks & Technologies
+              </h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {frameworkOptions.map((framework) => (
+                  <Badge
+                    key={framework}
+                    onClick={() => toggleSelection(framework, frameworks, setFrameworks)}
+                    variant={frameworks.includes(framework) ? 'default' : 'outline'}
+                    className="cursor-pointer text-sm py-2 px-4"
+                    data-testid={`framework-${framework}`}
+                  >
+                    {framework}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add custom framework..."
+                  value={customFramework}
+                  onChange={(e) => setCustomFramework(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addCustom(customFramework, frameworks, setFrameworks, setCustomFramework)}
+                />
+                <Button 
+                  onClick={() => addCustom(customFramework, frameworks, setFrameworks, setCustomFramework)}
+                  variant="outline"
+                >
+                  Add
+                </Button>
+              </div>
+            </Card>
 
-            {/* SOTA Review */}
-            {sotaReview && (
-              <Card className="p-6 bg-white shadow-sm" data-testid="sota-review-card">
-                <div className="flex items-center gap-2 mb-4">
-                  <BookOpen className="w-5 h-5 text-purple-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">State-of-the-Art Review</h2>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Summary</h3>
-                    <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
-                      {sotaReview.summary}
-                    </div>
-                  </div>
-                  
-                  {sotaReview.citations && sotaReview.citations.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Research Sources</h3>
-                      <div className="space-y-2">
-                        {sotaReview.citations.map((citation, idx) => (
-                          <CitationCard key={idx} citation={citation} index={idx} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
+            {/* Cutting Edge Topics */}
+            <Card className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Cutting-Edge Topics You Want to Explore
+              </h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {cuttingEdgeTopics.map((topic) => (
+                  <Badge
+                    key={topic}
+                    onClick={() => toggleSelection(topic, cuttingEdge, setCuttingEdge)}
+                    variant={cuttingEdge.includes(topic) ? 'default' : 'outline'}
+                    className="cursor-pointer text-sm py-2 px-4"
+                    data-testid={`topic-${topic}`}
+                  >
+                    {topic}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add custom topic..."
+                  value={customCuttingEdge}
+                  onChange={(e) => setCustomCuttingEdge(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addCustom(customCuttingEdge, cuttingEdge, setCuttingEdge, setCustomCuttingEdge)}
+                />
+                <Button 
+                  onClick={() => addCustom(customCuttingEdge, cuttingEdge, setCuttingEdge, setCustomCuttingEdge)}
+                  variant="outline"
+                >
+                  Add
+                </Button>
+              </div>
+            </Card>
 
-            {/* Recommendation */}
-            {recommendation && (
-              <Card className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-sm" data-testid="recommendation-card">
-                <div className="flex items-center gap-2 mb-4">
-                  <Lightbulb className="w-5 h-5 text-amber-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">Recommended Technique</h2>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Badge className="bg-amber-500 hover:bg-amber-600 mb-3">
-                      {recommendation.technique_name}
-                    </Badge>
-                    <p className="text-gray-800">{recommendation.why_it_fits}</p>
-                  </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-white p-4 rounded-lg border border-amber-200">
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Expected Gain</h3>
-                      <p className="text-green-700 font-medium">{recommendation.expected_metric_gain}</p>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-lg border border-amber-200">
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Risks</h3>
-                      <ul className="text-gray-700 space-y-1">
-                        {recommendation.risks.map((risk, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
-                            <span className="text-sm">{risk}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                  
-                  {recommendation.evidence && recommendation.evidence.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Supporting Evidence</h3>
-                      <div className="space-y-2">
-                        {recommendation.evidence.map((citation, idx) => (
-                          <CitationCard key={idx} citation={citation} index={idx} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={handleGenerateIdeas}
+                disabled={loading || interests.length === 0}
+                size="lg"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg px-8 py-6"
+                data-testid="generate-ideas-btn"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Generating Ideas...
+                  </>
+                ) : (
+                  <>
+                    Generate Research Ideas
+                    <Sparkles className="w-5 h-5 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Empty State */}
-        {!refineResult && (
-          <Card className="p-12 text-center bg-white/50 border-dashed" data-testid="empty-state">
-            <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              Start Your Research Journey
-            </h3>
-            <p className="text-gray-500">
-              Enter a research query above and click "Refine Research" to begin
-            </p>
-          </Card>
+        {/* STEP 2: Generated Ideas */}
+        {step === 'ideas' && (
+          <div className="max-w-5xl mx-auto space-y-6">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-900 mb-3">
+                Curated Research Ideas
+              </h1>
+              <p className="text-lg text-gray-600">
+                Pick an idea to refine, or start from scratch
+              </p>
+            </div>
+
+            <div className="grid gap-6">
+              {generatedIdeas.map((idea, index) => (
+                <Card 
+                  key={index}
+                  className="p-6 hover:shadow-xl transition-all cursor-pointer border-2 hover:border-indigo-400"
+                  onClick={() => startChat(idea)}
+                  data-testid={`idea-card-${index}`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{idea.title}</h3>
+                      <p className="text-gray-600 mb-3">{idea.description}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {idea.tags?.map((tag, idx) => (
+                          <Badge key={idx} variant="secondary">{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-gray-400" />
+                  </div>
+                </Card>
+              ))}
+
+              <Card 
+                className="p-6 border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer"
+                onClick={() => startChat()}
+                data-testid="start-from-scratch"
+              >
+                <div className="text-center py-4">
+                  <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-lg font-semibold text-gray-900 mb-1">Start From Scratch</p>
+                  <p className="text-gray-600">Create your own research idea with AI guidance</p>
+                </div>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: Multi-turn Chat */}
+        {step === 'chat' && (
+          <div className="max-w-5xl mx-auto">
+            <Card className="h-[calc(100vh-200px)] flex flex-col">
+              {/* Chat messages */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4" data-testid="chat-messages">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        message.role === 'user'
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-900'
+                      }`}
+                    >
+                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      {message.citations && message.citations.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-300">
+                          {message.citations.map((citation, idx) => (
+                            <CitationCard key={idx} citation={citation} index={idx} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 rounded-2xl px-4 py-3">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-600" />
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input area */}
+              <div className="border-t p-4">
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Type your message... (Shift+Enter for new line)"
+                    value={currentMessage}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="resize-none"
+                    rows={2}
+                    data-testid="chat-input"
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={loading || !currentMessage.trim()}
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                    data-testid="send-btn"
+                  >
+                    <Send className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
         )}
       </div>
     </div>
