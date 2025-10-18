@@ -281,7 +281,8 @@ async def generate_research_ideas(request: GenerateIdeasRequest):
                 difficulty="Advanced"
             ))
         
-        return GenerateIdeasResponse(ideas=ideas[:5])\n        
+        return GenerateIdeasResponse(ideas=ideas[:5])
+        
     except Exception as e:
         logging.error(f\"Error generating ideas: {str(e)}\")\n        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
