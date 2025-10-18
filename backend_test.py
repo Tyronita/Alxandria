@@ -181,6 +181,31 @@ def test_push_to_kaggle(dataset_name=None):
         log_test("Push to Kaggle", "FAIL", f"Exception: {str(e)}")
         return False
 
+def test_kaggle_link_verification(kaggle_link):
+    """CRITICAL TEST: Verify the Kaggle link actually works (200 not 404)"""
+    try:
+        print(f"    Testing Kaggle link: {kaggle_link}")
+        
+        # Test if the link returns 200 (not 404)
+        response = requests.get(kaggle_link, timeout=15, allow_redirects=True)
+        
+        if response.status_code == 200:
+            log_test("Kaggle Link Verification", "PASS", 
+                    f"Link works! Status: {response.status_code}")
+            return True
+        elif response.status_code == 404:
+            log_test("Kaggle Link Verification", "FAIL", 
+                    f"❌ CRITICAL: Link returns 404 - notebook doesn't exist on Kaggle!")
+            return False
+        else:
+            log_test("Kaggle Link Verification", "WARN", 
+                    f"Unexpected status: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        log_test("Kaggle Link Verification", "FAIL", f"Exception: {str(e)}")
+        return False
+
 def test_notebook_download_verification():
     """Test POST /api/ship/notebook endpoint and verify content"""
     try:
