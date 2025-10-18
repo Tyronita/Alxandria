@@ -101,3 +101,79 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  User wants Alexandria to generate a shareable Kaggle notebook link with pre-populated research data (papers, gaps, datasets, code). 
+  The notebook should be automatically pushed to the user's Kaggle account using their API credentials.
+
+backend:
+  - task: "Push notebook to Kaggle and return shareable link"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created new endpoint /api/ship/push-to-kaggle that generates notebook with research data, pushes to Kaggle using kaggle CLI, and returns shareable link. Also updated existing /api/ship/notebook endpoint to use the new generate_notebook_from_research function."
+
+frontend:
+  - task: "Display Kaggle shareable link in Ship page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/ShipPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added 'Push to Kaggle' button in ShipPage that calls the new endpoint. When successful, displays a green success card with the shareable Kaggle link and 'Open in Kaggle' button."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Push notebook to Kaggle and return shareable link"
+    - "Display Kaggle shareable link in Ship page"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Implementation complete for Kaggle notebook publishing feature:
+      
+      Backend changes:
+      1. Created /api/ship/push-to-kaggle endpoint that:
+         - Generates notebook using generate_notebook_from_research() with ALL research data from MongoDB
+         - Creates kernel metadata with proper formatting
+         - Pushes to Kaggle using 'kaggle kernels push' CLI command
+         - Returns shareable link: https://www.kaggle.com/code/{username}/{kernel-slug}
+      
+      Frontend changes:
+      1. Added 'Push to Kaggle' button in ShipPage
+      2. Added kaggleLink state to store and display the link
+      3. When published successfully, shows green success card with:
+         - Checkmark icon
+         - "Open in Kaggle" button
+         - "Copy Link" button
+      
+      Credentials are already configured in backend/.env:
+      - KAGGLE_USERNAME="evanoleary"
+      - KAGGLE_KEY="69a5b9afcdff4a5c56fa399c31d467c1"
+      - PPLX_API_KEY="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"
+      
+      Ready for testing. Need to test full flow:
+      1. Start research on landing page
+      2. Complete research journey (steps 1-4)
+      3. Navigate to Ship page
+      4. Click 'Push to Kaggle' button
+      5. Verify shareable link is displayed and opens correctly in Kaggle
