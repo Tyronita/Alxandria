@@ -310,7 +310,45 @@ async def send_chat_message(request: ChatMessageRequest):
             messages_for_api.append({
                 \"role\": msg.get(\"role\"),
                 \"content\": msg.get(\"content\")
-            })\n        \n        # Add current message\n        messages_for_api.append({"role": "user", "content": request.message})\n        \n        # Call Perplexity with conversation history\n        response = perplexity_client.chat.completions.create(\n            model=\"sonar-pro\",\n            messages=messages_for_api,\n            extra_body={\n                \"search_domain_filter\": [\"arxiv.org\", \"github.com\", \"kaggle.com\", \"paperswithcode.com\", \"huggingface.co\"]\n            }\n        )\n        \n        content = response.choices[0].message.content\n        citations = extract_citations(response)\n        \n        # Store conversation in MongoDB\n        conv_doc = {\n            \"conversation_id\": request.conversation_id,\n            \"message\": request.message,\n            \"response\": content,\n            \"citations\": [c.model_dump() for c in citations],\n            \"context\": request.context,\n            \"timestamp\": datetime.now(timezone.utc).isoformat()\n        }\n        await db.conversations.insert_one(conv_doc)\n        \n        return ChatMessageResponse(\n            response=content,\n            citations=citations\n        )\n        \n    except Exception as e:\n        logging.error(f\"Error in chat message: {str(e)}\")\n        raise HTTPException(\n            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,\n            detail=f\"Failed to process message: {str(e)}\"\n        )
+            })
+        
+        # Add current message
+        messages_for_api.append({"role": "user", "content": request.message})
+        
+        # Call Perplexity with conversation history
+        response = perplexity_client.chat.completions.create(
+            model="sonar-pro",
+            messages=messages_for_api,
+            extra_body={
+                "search_domain_filter": ["arxiv.org", "github.com", "kaggle.com", "paperswithcode.com", "huggingface.co"]
+            }
+        )
+        
+        content = response.choices[0].message.content
+        citations = extract_citations(response)
+        
+        # Store conversation in MongoDB
+        conv_doc = {
+            "conversation_id": request.conversation_id,
+            "message": request.message,
+            "response": content,
+            "citations": [c.model_dump() for c in citations],
+            "context": request.context,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        await db.conversations.insert_one(conv_doc)
+        
+        return ChatMessageResponse(
+            response=content,
+            citations=citations
+        )
+        
+    except Exception as e:
+        logging.error(f"Error in chat message: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process message: {str(e)}"
+        )
 
 @api_router.post("/research/refine", response_model=ResearchResponse)
 async def refine_research(request: ResearchQuery):
