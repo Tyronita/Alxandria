@@ -683,79 +683,45 @@ async def download_notebook(request: NotebookRequest):
 
 @api_router.post("/ship/push-to-kaggle")
 async def push_to_kaggle(request: NotebookRequest):
-    """Generate notebook with research data and push to Kaggle, return shareable link"""
+    """Generate notebook with research data and return download link + Kaggle upload instructions"""
     try:
         # Generate notebook with ALL research data
         notebook = await generate_notebook_from_research(request.session_id, request.topic, request.dataset_name)
         
-        # Create safe kernel slug with timestamp to ensure uniqueness
-        import time
-        safe_topic = request.topic.lower().replace(' ', '-').replace('_', '-')[:30]
-        safe_topic = ''.join(c for c in safe_topic if c.isalnum() or c == '-')
-        timestamp = str(int(time.time()))[-6:]  # Last 6 digits of timestamp
-        kernel_slug = f"alexandria-{safe_topic}-{timestamp}"
+        # Create safe filename
+        safe_topic = request.topic.lower().replace(' ', '_').replace('-', '_')[:30]
+        safe_topic = ''.join(c for c in safe_topic if c.isalnum() or c == '_')
+        filename = f"alexandria_{safe_topic}.ipynb"
         
-        # Create temp directory for kernel
-        with tempfile.TemporaryDirectory() as temp_dir:
-            notebook_path = os.path.join(temp_dir, "notebook.ipynb")
-            metadata_path = os.path.join(temp_dir, "kernel-metadata.json")
-            
-            # Write notebook file
-            with open(notebook_path, 'w') as f:
-                json.dump(notebook, f, indent=2)
-            
-            # Create kernel metadata - include both id and slug
-            # Title should resolve to the same slug to avoid 409 conflicts
-            title = kernel_slug.replace('-', ' ').title()
-            metadata = {
-                "id": f"{kaggle_username}/{kernel_slug}",  # Full ID format
-                "slug": kernel_slug,  # Just the slug part
-                "title": title,  # Title should match slug format
-                "code_file": "notebook.ipynb",
-                "language": "python",
-                "kernel_type": "notebook",
-                "is_private": False,
-                "enable_gpu": True,
-                "enable_internet": True,
-                "dataset_sources": [],
-                "competition_sources": [],
-                "kernel_sources": []
+        # Convert to JSON string
+        notebook_json = json.dumps(notebook, indent=2)
+        
+        # Create a simple Kaggle upload URL (users can create new notebook and paste content)
+        kaggle_new_notebook_url = "https://www.kaggle.com/code/new?language=python"
+        
+        return {
+            "status": "success",
+            "message": "Notebook generated successfully! Download and upload to Kaggle manually.",
+            "kaggle_link": kaggle_new_notebook_url,
+            "download_filename": filename,
+            "notebook_content": notebook_json,
+            "instructions": {
+                "step1": "Download the notebook using the /api/ship/notebook endpoint",
+                "step2": f"Go to {kaggle_new_notebook_url}",
+                "step3": "Click 'File' > 'Import Notebook' and upload your downloaded .ipynb file",
+                "step4": "Your notebook will be live on Kaggle with all your research data!"
+            },
+            "alternative_method": {
+                "description": "Or copy-paste the notebook content directly",
+                "step1": f"Go to {kaggle_new_notebook_url}",
+                "step2": "Delete the default cell content",
+                "step3": "Use the notebook_content field from this response to create cells manually"
             }
-            
-            # Only add dataset if it has proper format (username/dataset-name)
-            if request.dataset_name and '/' in request.dataset_name:
-                metadata["dataset_sources"].append(request.dataset_name)
-                logging.info(f"Adding dataset source: {request.dataset_name}")
-            else:
-                logging.info(f"Skipping dataset link - invalid format: {request.dataset_name}")
-            
-            # Write metadata file
-            with open(metadata_path, 'w') as f:
-                json.dump(metadata, f, indent=2)
-            
-            # Push to Kaggle using CLI
-            logging.info(f"Pushing kernel to Kaggle: {kernel_slug}")
-            result = run_kaggle_command([
-                'kaggle', 'kernels', 'push', '-p', temp_dir
-            ])
-            
-            logging.info(f"Kaggle push result: {result}")
-            
-            # Generate shareable link
-            kaggle_link = f"https://www.kaggle.com/code/{kaggle_username}/{kernel_slug}"
-            
-            return {
-                "status": "success",
-                "message": "Notebook pushed to Kaggle successfully!",
-                "kaggle_link": kaggle_link,
-                "kernel_slug": kernel_slug,
-                "username": kaggle_username,
-                "output": result
-            }
+        }
             
     except Exception as e:
-        logging.error(f"Kaggle push error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to push to Kaggle: {str(e)}")
+        logging.error(f"Notebook generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate notebook: {str(e)}")
 
 @api_router.get("/ship/requirements")
 async def download_requirements():
