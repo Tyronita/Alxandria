@@ -175,13 +175,19 @@ def evaluate(model, dataloader, device):
         session_id: sessionId,
         topic: topic,
         dataset_name: dataset
+      }, {
+        timeout: 30000 // 30 seconds for Kaggle push
       });
       
       setKaggleLink(response.data.kaggle_link);
       toast.success('Notebook published to Kaggle!');
     } catch (error) {
       console.error('Push to Kaggle error:', error);
-      toast.error(`Failed to push to Kaggle: ${error.response?.data?.detail || error.message}`);
+      if (error.code === 'ECONNABORTED') {
+        toast.error('Request timed out. Please try again.');
+      } else {
+        toast.error(`Failed to push to Kaggle: ${error.response?.data?.detail || error.message}`);
+      }
     } finally {
       setPushing(false);
     }
