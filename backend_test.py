@@ -167,6 +167,9 @@ def test_push_to_kaggle(dataset_name=None):
             
             log_test("Push to Kaggle", "PASS", 
                     f"Link: {kaggle_link}, Slug: {kernel_slug}")
+            
+            # Print the exact kaggle_link as requested in review
+            print(f"    🔗 EXACT KAGGLE LINK: {kaggle_link}")
             return True
             
         else:
