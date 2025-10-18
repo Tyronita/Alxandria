@@ -704,7 +704,7 @@ async def push_to_kaggle(request: NotebookRequest):
             
             # Create kernel metadata - all fields required for Kaggle API
             metadata = {
-                "id": None,  # null for new kernels
+                "id": f"{kaggle_username}/{kernel_slug}",  # Required format: username/slug
                 "title": f"Alexandria: {request.topic}",
                 "code_file": "notebook.ipynb",
                 "language": "python",
