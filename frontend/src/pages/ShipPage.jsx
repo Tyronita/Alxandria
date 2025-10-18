@@ -421,27 +421,57 @@ def evaluate(model, dataloader, device):
                 </TabsContent>
                 
                 <TabsContent value="setup" className="mt-6">
-                  <h3 className="text-lg font-semibold mb-4">Setup Instructions</h3>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold">Automated Setup</h3>
+                    <Button
+                      onClick={handleRunAll}
+                      disabled={automating}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                    >
+                      {automating ? 'Setting up...' : 'Run All Steps'}
+                    </Button>
+                  </div>
                   
-                  <div className="space-y-6">
-                    {kaggleSetupSteps.map((step, idx) => (
-                      <div key={idx} className="border-l-4 border-blue-500 pl-4">
-                        <h4 className="font-semibold text-gray-900 mb-2">{step.title}</h4>
-                        <pre className="bg-gray-100 p-3 rounded text-sm font-mono overflow-x-auto">
-                          {step.code}
-                        </pre>
+                  <div className="space-y-4">
+                    {automationSteps.map((step) => (
+                      <div key={step.key} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                            {getStatusIcon(automationStatus[step.key].status)}
+                            {step.title}
+                          </h4>
+                          <Button
+                            onClick={step.action}
+                            variant="outline"
+                            size="sm"
+                            disabled={automating}
+                          >
+                            Run Step
+                          </Button>
+                        </div>
+                        {automationStatus[step.key].message && (
+                          <p className="text-sm text-gray-600 mt-2">
+                            {automationStatus[step.key].message}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
                   
-                  <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5" />
-                      You're All Set!
+                  <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                      <Rocket className="w-5 h-5" />
+                      Manual Setup (Alternative)
                     </h4>
-                    <p className="text-green-800 text-sm">
-                      Download the notebook and requirements.txt, follow the setup steps, and start training your model!
+                    <p className="text-blue-800 text-sm mb-3">
+                      Prefer to set up manually? Follow these traditional steps:
                     </p>
+                    <div className="space-y-2 text-sm">
+                      <div>1. Create ~/.kaggle/kaggle.json with your API credentials</div>
+                      <div>2. Run: kaggle datasets download -d {dataset || 'dataset-name'}</div>
+                      <div>3. Run: pip install -r requirements.txt</div>
+                      <div>4. Run: jupyter notebook alexandria_{topic?.replace(/\s+/g, '_')}.ipynb</div>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
