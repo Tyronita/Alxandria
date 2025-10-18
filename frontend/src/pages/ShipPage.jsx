@@ -28,6 +28,16 @@ export default function ShipPage() {
       return;
     }
     loadNotebookPreview();
+    
+    // Check if Kaggle credentials are stored
+    const stored = localStorage.getItem('kaggle_credentials');
+    if (stored) {
+      try {
+        setKaggleCredentials(JSON.parse(stored));
+      } catch (e) {
+        console.error('Failed to parse stored credentials:', e);
+      }
+    }
   }, [topic]);
 
   const loadNotebookPreview = () => {
