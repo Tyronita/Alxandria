@@ -77,6 +77,9 @@ def run_kaggle_command(command: List[str]) -> str:
         env = os.environ.copy()
         env['KAGGLE_USERNAME'] = kaggle_username
         env['KAGGLE_KEY'] = kaggle_key
+        # Add venv bin to PATH to find kaggle command
+        if '/root/.venv/bin' not in env.get('PATH', ''):
+            env['PATH'] = f"/root/.venv/bin:{env.get('PATH', '')}"
         result = subprocess.run(command, capture_output=True, text=True, env=env, timeout=30)
         return result.stdout
     finally:
