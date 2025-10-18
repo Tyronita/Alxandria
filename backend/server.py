@@ -199,81 +199,74 @@ class ChatConverseResponse(BaseModel):
 @api_router.post("/chat/converse", response_model=ChatConverseResponse)
 async def conversational_research(request: ChatConverseRequest):
     """
-    Generate curated research ideas based on user interests
+    Guided conversational research assistant
     """
     try:
-        system_prompt = """You are a research advisor. Generate 4-5 specific, cutting-edge ML research ideas.
-        For each idea, provide:
-        - A compelling title
-        - A 2-3 sentence description
-        - 3-4 relevant tags
-        - Difficulty level (Beginner/Intermediate/Advanced)
+        # Build system prompt for guiding conversation
+        system_prompt = """You are an expert AI research guide. Your role is to guide users through a research journey:
+
+1. UNDERSTAND their curiosity deeply
+2. SHOW them relevant cutting-edge research with citations
+3. EXPLAIN concepts clearly and engagingly
+4. EXPLORE future directions and novel ideas
+5. TEACH about relevant technologies and frameworks
+6. GUIDE them toward a concrete, actionable research idea
+
+Be conversational, enthusiastic, and educational. Use citations to back up claims. 
+Ask thoughtful follow-up questions to refine their interests.
+Break down complex topics into understandable explanations."""
         
-        Make ideas specific, actionable, and aligned with current research trends."""
+        # Build message history for API
+        messages_to_send = [{"role": "system", "content": system_prompt}]
         
-        user_prompt = f"""Generate research ideas for someone interested in:
-        Areas: {', '.join(request.interests)}
-        Frameworks: {', '.join(request.frameworks) if request.frameworks else 'Any'}
-        Cutting-edge topics: {', '.join(request.cutting_edge) if request.cutting_edge else 'General ML'}
+        # Add conversation history (last 4 exchanges to keep context)
+        if request.conversation_history:
+            for msg in request.conversation_history[-8:]:
+                if msg.get("role") in ["user", "assistant"]:
+                    messages_to_send.append({
+                        "role": msg["role"],
+                        "content": msg["content"]
+                    })
         
-        Focus on practical, implementable ideas that combine these interests."""
+        # Add current message
+        messages_to_send.append({"role": "user", "content": request.message})
+        
+        # Call Perplexity with appropriate model
+        model = "sonar-deep-research" if request.is_initial else "sonar-pro"
         
         response = perplexity_client.chat.completions.create(
-            model="sonar-pro",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
+            model=model,
+            messages=messages_to_send,
             extra_body={
-                "search_domain_filter": ["arxiv.org", "github.com", "kaggle.com", "paperswithcode.com"]
+                "search_domain_filter": ["arxiv.org", "github.com", "kaggle.com", "paperswithcode.com", "huggingface.co"]
             }
         )
         
         content = response.choices[0].message.content
+        citations = extract_citations(response)
         
-        # Generate structured ideas (simplified for demo)
-        ideas = []
-        areas_map = {
-            'Natural Language Processing': ['NLP', 'Transformers', 'Text'],
-            'Medical Imaging & Disease Classification': ['Healthcare', 'Computer Vision', 'Medical AI'],
-            'Fraud Detection & Security': ['Security', 'Anomaly Detection', 'Classification'],
-            'Computer Vision': ['Vision', 'CNN', 'Object Detection'],
-            'Reinforcement Learning': ['RL', 'Policy Learning', 'Agent'],
-            'Time Series Forecasting': ['Time Series', 'Forecasting', 'Sequential'],
-            'Generative AI': ['Generative', 'GANs', 'Diffusion'],
-            'Multimodal Learning': ['Multimodal', 'Cross-modal', 'Vision-Language']
+        # Store in MongoDB
+        conv_doc = {
+            "session_id": request.session_id,
+            "message": request.message,
+            "response": content,
+            "citations": [c.model_dump() for c in citations],
+            "is_initial": request.is_initial,
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
+        await db.conversations.insert_one(conv_doc)
         
-        for i, interest in enumerate(request.interests[:5]):
-            tags = areas_map.get(interest, ['ML', 'Research'])
-            if request.frameworks:
-                tags.append(request.frameworks[0])
-            if request.cutting_edge:
-                tags.append(request.cutting_edge[0].split()[0])
-            
-            ideas.append(ResearchIdea(
-                title=f"{interest}: Novel Approach for {request.cutting_edge[0] if request.cutting_edge else 'Advanced Methods'}",
-                description=f"Explore cutting-edge techniques in {interest.lower()} using {request.frameworks[0] if request.frameworks else 'modern frameworks'}. Focus on improving state-of-the-art performance through innovative architectures and training strategies.",
-                tags=tags[:4],
-                difficulty="Intermediate" if i % 2 == 0 else "Advanced"
-            ))
-        
-        # Add a creative combination idea
-        if len(request.interests) >= 2:
-            ideas.append(ResearchIdea(
-                title=f"Cross-Domain: {request.interests[0]} meets {request.interests[1]}",
-                description=f"Innovative research combining {request.interests[0].lower()} with {request.interests[1].lower()}. Leverage transfer learning and multi-task approaches to achieve breakthrough results.",
-                tags=[request.interests[0].split()[0], request.interests[1].split()[0], "Transfer Learning", "Novel"],
-                difficulty="Advanced"
-            ))
-        
-        return GenerateIdeasResponse(ideas=ideas[:5])
+        return ChatConverseResponse(
+            response=content,
+            citations=citations,
+            research_cards=[]
+        )
         
     except Exception as e:
-        logging.error(f"Error generating ideas: {str(e)}")
+        logging.error(f"Error in conversation: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate ideas: {str(e)}"
+            detail=f"Failed to process conversation: {str(e)}"
         )
 
 @api_router.post("/chat/message", response_model=ChatMessageResponse)
