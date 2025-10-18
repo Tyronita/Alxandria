@@ -158,6 +158,12 @@ export default function ResearchPage() {
     setTimeout(() => sendMessage(), 100);
   };
 
+  const handleGenerateBlueprint = async () => {
+    toast.success('Generating comprehensive research blueprint...');
+    setCurrentMessage('Generate a complete research blueprint with methodology, timeline, resources, and implementation steps');
+    setTimeout(() => sendMessage(), 100);
+  };
+
   const CitationBadge = ({ citation, index }) => (
     <a
       href={citation.url}
