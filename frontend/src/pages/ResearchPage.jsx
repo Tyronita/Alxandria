@@ -351,10 +351,16 @@ export default function ResearchPage() {
               )}
               
               {currentStep === 5 && (
-                <Badge className="bg-green-600 text-white px-6 py-3 text-base">
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Ready to Ship!
-                </Badge>
+                <Button
+                  onClick={() => navigate('/ship', { 
+                    state: { topic, dataset: selectedDataset, sessionId } 
+                  })}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-8"
+                  data-testid="ship-it-btn"
+                >
+                  <Rocket className="w-5 h-5 mr-2" />
+                  Ship It!
+                </Button>
               )}
             </div>
           </>
