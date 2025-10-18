@@ -315,8 +315,8 @@ async def send_chat_message(request: ChatMessageRequest):
         recent_messages = request.messages[-6:] if len(request.messages) > 6 else request.messages
         for msg in recent_messages:
             messages_for_api.append({
-                \"role\": msg.get(\"role\"),
-                \"content\": msg.get(\"content\")
+                "role": msg.get("role"),
+                "content": msg.get("content")
             })
         
         # Add current message
