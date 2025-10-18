@@ -84,7 +84,23 @@ def run_kaggle_command(command: List[str]) -> str:
             os.remove(temp_file)
 
 async def generate_notebook_from_research(session_id: str, topic: str, dataset: str) -> dict:
-    """Generate a complete Jupyter notebook"""
+    """Generate notebook with ALL research data from conversation"""
+    
+    # Fetch ALL research data from MongoDB
+    research_doc = await db.research.find_one({"session_id": session_id, "step": 1})
+    
+    if not research_doc:
+        # Fallback to generic if no data
+        research_content = "Research data not found. Using baseline template."
+        gaps_content = ""
+        dataset_content = ""
+        implementation_content = ""
+    else:
+        research_content = research_doc.get('content', '')
+        gaps_content = research_doc.get('gaps', '')
+        dataset_content = research_doc.get('datasets', '')
+        implementation_content = research_doc.get('implementation', '')
+    
     notebook = {
         "cells": [
             {
