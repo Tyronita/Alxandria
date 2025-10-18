@@ -768,7 +768,7 @@ async def push_to_kaggle(request: NotebookRequest):
         
         # Always create a new kernel with matching title and slug
         kernel_slug = f"alexandria-{safe_topic}-{timestamp}"
-        kernel_id = f"{kaggle_username}/{kernel_slug}"
+        kernel_id = f"{kaggle_user}/{kernel_slug}"
         
         # Create title that will convert to the same slug
         # Kaggle will convert "Alexandria Topic Name" -> "alexandria-topic-name"
