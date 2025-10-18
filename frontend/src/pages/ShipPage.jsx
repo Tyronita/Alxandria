@@ -166,31 +166,124 @@ def evaluate(model, dataloader, device):
     toast.success('Code copied to clipboard!');
   };
 
-  const kaggleSetupSteps = [
+  const [automationStatus, setAutomationStatus] = useState({
+    kaggle: { status: 'pending', message: '' },
+    dataset: { status: 'pending', message: '' },
+    requirements: { status: 'pending', message: '' },
+    notebook: { status: 'pending', message: '' },
+    submit: { status: 'pending', message: '' }
+  });
+  const [automating, setAutomating] = useState(false);
+
+  const handleSetupKaggle = async () => {
+    try {
+      const response = await axios.post(`${API}/ship/setup-kaggle`);
+      setAutomationStatus(prev => ({
+        ...prev,
+        kaggle: { status: 'success', message: response.data.message }
+      }));
+      toast.success('Kaggle credentials configured!');
+      return true;
+    } catch (error) {
+      setAutomationStatus(prev => ({
+        ...prev,
+        kaggle: { status: 'error', message: error.message }
+      }));
+      toast.error('Failed to setup Kaggle');
+      return false;
+    }
+  };
+
+  const handleDownloadDataset = async () => {
+    try {
+      const response = await axios.post(`${API}/ship/download-dataset?dataset_name=${dataset}`);
+      setAutomationStatus(prev => ({
+        ...prev,
+        dataset: { status: 'success', message: response.data.message }
+      }));
+      toast.success('Dataset downloaded!');
+      return true;
+    } catch (error) {
+      setAutomationStatus(prev => ({
+        ...prev,
+        dataset: { status: 'error', message: error.message }
+      }));
+      toast.error('Failed to download dataset');
+      return false;
+    }
+  };
+
+  const handleInstallRequirements = async () => {
+    try {
+      const response = await axios.post(`${API}/ship/install-requirements`);
+      setAutomationStatus(prev => ({
+        ...prev,
+        requirements: { status: 'success', message: response.data.message }
+      }));
+      toast.success('Requirements installed!');
+      return true;
+    } catch (error) {
+      setAutomationStatus(prev => ({
+        ...prev,
+        requirements: { status: 'error', message: error.message }
+      }));
+      toast.error('Failed to install requirements');
+      return false;
+    }
+  };
+
+  const handleRunAll = async () => {
+    setAutomating(true);
+    
+    toast.info('Starting automated setup...');
+    
+    // Step 1: Setup Kaggle
+    const kaggleOk = await handleSetupKaggle();
+    if (!kaggleOk) {
+      setAutomating(false);
+      return;
+    }
+    
+    // Step 2: Download Dataset
+    const datasetOk = await handleDownloadDataset();
+    if (!datasetOk) {
+      setAutomating(false);
+      return;
+    }
+    
+    // Step 3: Install Requirements
+    const reqOk = await handleInstallRequirements();
+    if (!reqOk) {
+      setAutomating(false);
+      return;
+    }
+    
+    setAutomating(false);
+    toast.success('Automated setup complete! Download notebook and start training.');
+  };
+
+  const getStatusIcon = (status) => {
+    if (status === 'success') return <CheckCircle2 className="w-5 h-5 text-green-600" />;
+    if (status === 'error') return <ExternalLink className="w-5 h-5 text-red-600" />;
+    if (status === 'pending') return <div className="w-5 h-5 border-2 border-gray-300 rounded-full" />;
+    return null;
+  };
+
+  const automationSteps = [
     {
+      key: 'kaggle',
       title: '1. Setup Kaggle Credentials',
-      code: `# Create ~/.kaggle/kaggle.json
-{
-  "username": "your_username",
-  "key": "your_api_key"
-}`
+      action: handleSetupKaggle
     },
     {
+      key: 'dataset',
       title: '2. Download Dataset',
-      code: `kaggle datasets download -d ${dataset || 'dataset-name'}
-unzip ${dataset || 'dataset-name'}.zip`
+      action: handleDownloadDataset
     },
     {
+      key: 'requirements',
       title: '3. Install Requirements',
-      code: `pip install -r requirements.txt`
-    },
-    {
-      title: '4. Run Notebook',
-      code: `jupyter notebook alexandria_${topic?.replace(/\s+/g, '_')}.ipynb`
-    },
-    {
-      title: '5. Submit to Kaggle',
-      code: `kaggle competitions submit -c competition-name -f submission.csv -m "Alexandria baseline"`
+      action: handleInstallRequirements
     }
   ];
 
