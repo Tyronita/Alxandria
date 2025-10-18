@@ -266,8 +266,8 @@ async def generate_research_ideas(request: GenerateIdeasRequest):
                 tags.append(request.cutting_edge[0].split()[0])
             
             ideas.append(ResearchIdea(
-                title=f\"{interest}: Novel Approach for {request.cutting_edge[0] if request.cutting_edge else 'Advanced Methods'}\",
-                description=f\"Explore cutting-edge techniques in {interest.lower()} using {request.frameworks[0] if request.frameworks else 'modern frameworks'}. Focus on improving state-of-the-art performance through innovative architectures and training strategies.\",
+                title=f"{interest}: Novel Approach for {request.cutting_edge[0] if request.cutting_edge else 'Advanced Methods'}",
+                description=f"Explore cutting-edge techniques in {interest.lower()} using {request.frameworks[0] if request.frameworks else 'modern frameworks'}. Focus on improving state-of-the-art performance through innovative architectures and training strategies.",
                 tags=tags[:4],
                 difficulty="Intermediate" if i % 2 == 0 else "Advanced"
             ))
