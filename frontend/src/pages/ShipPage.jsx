@@ -182,6 +182,13 @@ def evaluate(model, dataloader, device):
   };
 
   const handlePushToKaggle = async () => {
+    // Check if credentials are set
+    if (!kaggleCredentials) {
+      toast.error('Please set up your Kaggle API credentials first');
+      setShowKaggleSetup(true);
+      return;
+    }
+
     setPushing(true);
     toast.info('Pushing notebook to Kaggle...');
     
@@ -189,7 +196,8 @@ def evaluate(model, dataloader, device):
       const response = await axios.post(`${API}/ship/push-to-kaggle`, {
         session_id: sessionId,
         topic: topic,
-        dataset_name: dataset
+        dataset_name: dataset,
+        kaggle_credentials: kaggleCredentials  // Pass user's credentials
       }, {
         timeout: 30000 // 30 seconds for Kaggle push
       });
@@ -200,12 +208,18 @@ def evaluate(model, dataloader, device):
       console.error('Push to Kaggle error:', error);
       if (error.code === 'ECONNABORTED') {
         toast.error('Request timed out. Please try again.');
+      } else if (error.response?.status === 403) {
+        toast.error('Kaggle API access denied. Please verify your phone number on Kaggle.');
       } else {
         toast.error(`Failed to push to Kaggle: ${error.response?.data?.detail || error.message}`);
       }
     } finally {
       setPushing(false);
     }
+  };
+
+  const handleSaveCredentials = (credentials) => {
+    setKaggleCredentials(credentials);
   };
 
   const [automationStatus, setAutomationStatus] = useState({
