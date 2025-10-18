@@ -815,7 +815,11 @@ async def push_to_kaggle(request: NotebookRequest):
             logging.info(f"Attempting to push/update kernel: {kernel_id}")
             
             try:
-                result = run_kaggle_command(['kaggle', 'kernels', 'push', '-p', temp_dir])
+                result = run_kaggle_command(
+                    ['kaggle', 'kernels', 'push', '-p', temp_dir],
+                    username=kaggle_user,
+                    api_key=kaggle_api_key
+                )
                 logging.info(f"Kaggle CLI output: {result}")
                 
                 # Check for specific errors
@@ -823,7 +827,7 @@ async def push_to_kaggle(request: NotebookRequest):
                     # 403 Forbidden - account verification or permissions issue
                     raise HTTPException(
                         status_code=403,
-                        detail="Kaggle API access denied. Your account may need phone verification or additional permissions. Please: 1) Go to kaggle.com/settings 2) Verify your phone number 3) Check API token permissions"
+                        detail="Kaggle API access denied. Please verify your phone number at https://www.kaggle.com/settings and ensure your API credentials are correct."
                     )
                 elif "error" in result.lower() and "successfully" not in result.lower():
                     raise HTTPException(status_code=500, detail=f"Kaggle API error: {result}")
@@ -836,7 +840,7 @@ async def push_to_kaggle(request: NotebookRequest):
                     "message": "Notebook pushed to Kaggle successfully!",
                     "kaggle_link": kaggle_link,
                     "kernel_slug": kernel_slug,
-                    "username": kaggle_username
+                    "username": kaggle_user
                 }
                 
             except subprocess.TimeoutExpired:
