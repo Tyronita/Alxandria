@@ -722,6 +722,29 @@ async def download_notebook(request: NotebookRequest):
 async def push_to_kaggle(request: NotebookRequest):
     """Generate notebook with research data and push to Kaggle, return shareable link"""
     try:
+        # Get Kaggle credentials - use from request or fallback to env
+        if request.kaggle_credentials:
+            kaggle_user = request.kaggle_credentials.get('username')
+            kaggle_api_key = request.kaggle_credentials.get('key')
+            
+            if not kaggle_user or not kaggle_api_key:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid Kaggle credentials format. Must include 'username' and 'key'"
+                )
+        else:
+            # Fallback to env variables (for backward compatibility)
+            kaggle_user = kaggle_username
+            kaggle_api_key = kaggle_key
+            
+            if not kaggle_user or not kaggle_api_key:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No Kaggle credentials provided. Please set up your Kaggle API credentials."
+                )
+        
+        logging.info(f"Using Kaggle credentials for user: {kaggle_user}")
+        
         # Generate notebook with ALL research data
         notebook = await generate_notebook_from_research(request.session_id, request.topic, request.dataset_name)
         
