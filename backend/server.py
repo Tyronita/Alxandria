@@ -688,10 +688,12 @@ async def push_to_kaggle(request: NotebookRequest):
         # Generate notebook with ALL research data
         notebook = await generate_notebook_from_research(request.session_id, request.topic, request.dataset_name)
         
-        # Create safe kernel slug
-        safe_topic = request.topic.lower().replace(' ', '-').replace('_', '-')[:50]
+        # Create safe kernel slug with timestamp to ensure uniqueness
+        import time
+        safe_topic = request.topic.lower().replace(' ', '-').replace('_', '-')[:30]
         safe_topic = ''.join(c for c in safe_topic if c.isalnum() or c == '-')
-        kernel_slug = f"alexandria-{safe_topic}"
+        timestamp = str(int(time.time()))[-6:]  # Last 6 digits of timestamp
+        kernel_slug = f"alexandria-{safe_topic}-{timestamp}"
         
         # Create temp directory for kernel
         with tempfile.TemporaryDirectory() as temp_dir:
