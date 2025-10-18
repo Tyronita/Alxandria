@@ -230,8 +230,6 @@ def evaluate(model, dataloader, device):
     submit: { status: 'pending', message: '' }
   });
   const [automating, setAutomating] = useState(false);
-  const [kaggleLink, setKaggleLink] = useState(null);
-  const [pushing, setPushing] = useState(false);
 
   const handleSetupKaggle = async () => {
     try {
