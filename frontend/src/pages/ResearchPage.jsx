@@ -46,6 +46,8 @@ export default function ResearchPage() {
         topic: topicOverride || topic,
         step: step,
         selected_data: (step === 4 || step === 5) && selectedDataset ? { dataset_name: selectedDataset } : null
+      }, {
+        timeout: 60000 // 60 seconds - Perplexity API can take 20-30 seconds
       });
 
       setStepData(prev => ({
@@ -61,7 +63,11 @@ export default function ResearchPage() {
       toast.success(`Step ${step} complete!`);
     } catch (error) {
       console.error('Step error:', error);
-      toast.error('Failed to load step. Please try again.');
+      if (error.code === 'ECONNABORTED') {
+        toast.error('Request timed out. Please try again.');
+      } else {
+        toast.error('Failed to load step. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
