@@ -275,9 +275,9 @@ async def generate_research_ideas(request: GenerateIdeasRequest):
         # Add a creative combination idea
         if len(request.interests) >= 2:
             ideas.append(ResearchIdea(
-                title=f\"Cross-Domain: {request.interests[0]} meets {request.interests[1]}\",
-                description=f\"Innovative research combining {request.interests[0].lower()} with {request.interests[1].lower()}. Leverage transfer learning and multi-task approaches to achieve breakthrough results.\",
-                tags=[request.interests[0].split()[0], request.interests[1].split()[0], \"Transfer Learning\", \"Novel\"],
+                title=f"Cross-Domain: {request.interests[0]} meets {request.interests[1]}",
+                description=f"Innovative research combining {request.interests[0].lower()} with {request.interests[1].lower()}. Leverage transfer learning and multi-task approaches to achieve breakthrough results.",
+                tags=[request.interests[0].split()[0], request.interests[1].split()[0], "Transfer Learning", "Novel"],
                 difficulty="Advanced"
             ))
         
