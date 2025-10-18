@@ -4,19 +4,18 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { 
   ArrowLeft, 
   Sparkles,
   Send,
   Loader2,
   ExternalLink,
+  BookOpen,
   Lightbulb,
-  MessageSquare,
-  ChevronRight,
-  Check
+  TrendingUp,
+  Rocket
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -28,65 +27,24 @@ export default function ResearchPage() {
   const location = useLocation();
   const messagesEndRef = useRef(null);
   
-  // Wizard state
-  const [step, setStep] = useState('form'); // 'form', 'ideas', 'chat'
-  
-  // Form state
-  const [interests, setInterests] = useState([]);
-  const [frameworks, setFrameworks] = useState([]);
-  const [cuttingEdge, setCuttingEdge] = useState([]);
-  const [customInterest, setCustomInterest] = useState('');
-  const [customFramework, setCustomFramework] = useState('');
-  const [customCuttingEdge, setCustomCuttingEdge] = useState('');
-  
-  // Chat state
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [conversationId, setConversationId] = useState(null);
-  
-  // Ideas state
-  const [generatedIdeas, setGeneratedIdeas] = useState([]);
-  const [selectedIdea, setSelectedIdea] = useState(null);
-
-  const researchAreas = [
-    'Natural Language Processing',
-    'Medical Imaging & Disease Classification',
-    'Fraud Detection & Security',
-    'Computer Vision',
-    'Reinforcement Learning',
-    'Time Series Forecasting',
-    'Generative AI',
-    'Multimodal Learning'
-  ];
-
-  const frameworkOptions = [
-    'PyTorch',
-    'TensorFlow',
-    'JAX',
-    'Hugging Face Transformers',
-    'LangChain',
-    'FastAPI',
-    'scikit-learn',
-    'XGBoost'
-  ];
-
-  const cuttingEdgeTopics = [
-    'Large Language Models (LLMs)',
-    'Diffusion Models',
-    'Retrieval Augmented Generation (RAG)',
-    'Few-shot Learning',
-    'Federated Learning',
-    'Neural Architecture Search',
-    'Explainable AI (XAI)',
-    'Quantum Machine Learning'
-  ];
+  const [sessionId] = useState(Date.now().toString());
 
   useEffect(() => {
-    if (location.state?.selectedArea) {
-      // Pre-select area from landing page
-      const area = researchAreas.find(a => location.state.selectedArea.includes(a.split(' ')[0]));
-      if (area) setInterests([area]);
+    const initialQuery = location.state?.initialQuery;
+    if (initialQuery) {
+      // Start conversation with user's initial query
+      startConversation(initialQuery);
+    } else {
+      // Start with welcome message
+      const welcomeMessage = {
+        role: 'assistant',
+        content: "Hi! I'm your AI research guide. What would you like to learn about today? Share your curiosity, and I'll help you explore cutting-edge research, discover novel ideas, and guide you toward an actionable research direction.",
+        timestamp: new Date().toISOString()
+      };
+      setMessages([welcomeMessage]);
     }
   }, [location]);
 
@@ -98,61 +56,37 @@ export default function ResearchPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const toggleSelection = (item, list, setList) => {
-    if (list.includes(item)) {
-      setList(list.filter(i => i !== item));
-    } else {
-      setList([...list, item]);
-    }
-  };
-
-  const addCustom = (value, list, setList, setClear) => {
-    if (value.trim()) {
-      setList([...list, value.trim()]);
-      setClear('');
-    }
-  };
-
-  const handleGenerateIdeas = async () => {
-    if (interests.length === 0) {
-      toast.error('Please select at least one area of interest');
-      return;
-    }
-
+  const startConversation = async (query) => {
+    const userMessage = {
+      role: 'user',
+      content: query,
+      timestamp: new Date().toISOString()
+    };
+    setMessages([userMessage]);
     setLoading(true);
+
     try {
-      const response = await axios.post(`${API}/chat/generate-ideas`, {
-        interests,
-        frameworks,
-        cutting_edge: cuttingEdge
+      const response = await axios.post(`${API}/chat/converse`, {
+        session_id: sessionId,
+        message: query,
+        is_initial: true
       });
-      
-      setGeneratedIdeas(response.data.ideas || []);
-      setStep('ideas');
-      toast.success('Research ideas generated!');
+
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.data.response,
+        citations: response.data.citations || [],
+        research_cards: response.data.research_cards || [],
+        timestamp: new Date().toISOString()
+      };
+
+      setMessages([userMessage, assistantMessage]);
     } catch (error) {
-      console.error('Error generating ideas:', error);
-      toast.error('Failed to generate ideas');
+      console.error('Error starting conversation:', error);
+      toast.error('Failed to start conversation');
     } finally {
       setLoading(false);
     }
-  };
-
-  const startChat = (idea = null) => {
-    const convId = Date.now().toString();
-    setConversationId(convId);
-    setSelectedIdea(idea);
-    
-    const initialMessage = {
-      role: 'assistant',
-      content: idea 
-        ? `Great choice! Let's refine this idea: "${idea.title}". ${idea.description}\n\nWhat specific aspect interests you most? Or would you like to explore a different angle?`
-        : `Hi! I'm your AI research assistant. Based on your interests in ${interests.join(', ')}, let's craft a cutting-edge research idea together. What problem or challenge would you like to tackle?`,
-      timestamp: new Date().toISOString()
-    };
-    
-    setMessages([initialMessage]);
-    setStep('chat');
   };
 
   const sendMessage = async () => {
@@ -169,36 +103,24 @@ export default function ResearchPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API}/chat/message`, {
-        conversation_id: conversationId,
+      const response = await axios.post(`${API}/chat/converse`, {
+        session_id: sessionId,
         message: currentMessage,
-        context: {
-          interests,
-          frameworks,
-          cutting_edge: cuttingEdge,
-          selected_idea: selectedIdea
-        },
-        messages: messages
+        conversation_history: messages.slice(-6)
       });
 
       const assistantMessage = {
         role: 'assistant',
         content: response.data.response,
         citations: response.data.citations || [],
+        research_cards: response.data.research_cards || [],
         timestamp: new Date().toISOString()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-      
-      const errorMessage = {
-        role: 'assistant',
-        content: "I apologize, but I encountered an error. Please try again.",
-        timestamp: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      toast.error('Failed to send message. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -211,7 +133,7 @@ export default function ResearchPage() {
     }
   };
 
-  const CitationCard = ({ citation, index }) => (
+  const CitationBadge = ({ citation, index }) => (
     <a
       href={citation.url}
       target="_blank"
@@ -224,8 +146,24 @@ export default function ResearchPage() {
     </a>
   );
 
+  const ResearchCard = ({ card, index }) => (
+    <Card className="p-4 bg-gradient-to-br from-white to-blue-50 border-2 border-blue-100">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white">
+          {card.type === 'research' ? <BookOpen className="w-5 h-5" /> : 
+           card.type === 'idea' ? <Lightbulb className="w-5 h-5" /> : 
+           <TrendingUp className="w-5 h-5" />}
+        </div>
+        <div className="flex-1">
+          <h4 className="font-semibold text-gray-900 mb-1">{card.title}</h4>
+          <p className="text-sm text-gray-600">{card.description}</p>
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -233,298 +171,102 @@ export default function ResearchPage() {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => step === 'form' ? navigate('/') : setStep('form')}
-              data-testid="back-btn"
+              onClick={() => navigate('/')}
+              data-testid="back-home-btn"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              {step === 'form' ? 'Home' : 'Back'}
+              Home
             </Button>
-            <div className="h-6 w-px bg-gray-300" />
+            <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-600" />
-              <span className="text-lg font-semibold text-gray-900">Research Assistant</span>
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <span className="text-lg font-semibold text-gray-900">Research Journey</span>
             </div>
-          </div>
-          
-          {/* Progress indicator */}
-          <div className="hidden sm:flex items-center gap-2 text-sm">
-            <Badge variant={step === 'form' ? 'default' : 'secondary'}>1. Interests</Badge>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <Badge variant={step === 'ideas' ? 'default' : 'secondary'}>2. Ideas</Badge>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <Badge variant={step === 'chat' ? 'default' : 'secondary'}>3. Refine</Badge>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* STEP 1: Form */}
-        {step === 'form' && (
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                Tell Us About Your Research Interests
-              </h1>
-              <p className="text-lg text-gray-600">
-                Help us understand what you want to explore
-              </p>
-            </div>
-
-            {/* Areas of Interest */}
-            <Card className="p-6" data-testid="interests-card">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-indigo-600" />
-                Areas of Interest
-              </h3>
-              <div className="grid sm:grid-cols-2 gap-3 mb-4">
-                {researchAreas.map((area) => (
+      {/* Chat Interface */}
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <Card className="h-[calc(100vh-180px)] flex flex-col shadow-xl border-2 border-gray-200">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6" data-testid="chat-messages">
+            {messages.map((message, index) => (
+              <div key={index}>
+                <div
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   <div
-                    key={area}
-                    onClick={() => toggleSelection(area, interests, setInterests)}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      interests.includes(area)
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 hover:border-indigo-300'
+                    className={`max-w-[85%] rounded-2xl px-5 py-4 ${
+                      message.role === 'user'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                        : 'bg-white border-2 border-gray-200 text-gray-900 shadow-md'
                     }`}
-                    data-testid={`interest-${area}`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                        interests.includes(area) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'
-                      }`}>
-                        {interests.includes(area) && <Check className="w-3 h-3 text-white" />}
-                      </div>
-                      <span className="font-medium text-gray-900">{area}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add custom area..."
-                  value={customInterest}
-                  onChange={(e) => setCustomInterest(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addCustom(customInterest, interests, setInterests, setCustomInterest)}
-                  data-testid="custom-interest-input"
-                />
-                <Button 
-                  onClick={() => addCustom(customInterest, interests, setInterests, setCustomInterest)}
-                  variant="outline"
-                >
-                  Add
-                </Button>
-              </div>
-            </Card>
-
-            {/* Frameworks */}
-            <Card className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Frameworks & Technologies
-              </h3>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {frameworkOptions.map((framework) => (
-                  <Badge
-                    key={framework}
-                    onClick={() => toggleSelection(framework, frameworks, setFrameworks)}
-                    variant={frameworks.includes(framework) ? 'default' : 'outline'}
-                    className="cursor-pointer text-sm py-2 px-4"
-                    data-testid={`framework-${framework}`}
-                  >
-                    {framework}
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add custom framework..."
-                  value={customFramework}
-                  onChange={(e) => setCustomFramework(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addCustom(customFramework, frameworks, setFrameworks, setCustomFramework)}
-                />
-                <Button 
-                  onClick={() => addCustom(customFramework, frameworks, setFrameworks, setCustomFramework)}
-                  variant="outline"
-                >
-                  Add
-                </Button>
-              </div>
-            </Card>
-
-            {/* Cutting Edge Topics */}
-            <Card className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Cutting-Edge Topics You Want to Explore
-              </h3>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {cuttingEdgeTopics.map((topic) => (
-                  <Badge
-                    key={topic}
-                    onClick={() => toggleSelection(topic, cuttingEdge, setCuttingEdge)}
-                    variant={cuttingEdge.includes(topic) ? 'default' : 'outline'}
-                    className="cursor-pointer text-sm py-2 px-4"
-                    data-testid={`topic-${topic}`}
-                  >
-                    {topic}
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add custom topic..."
-                  value={customCuttingEdge}
-                  onChange={(e) => setCustomCuttingEdge(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addCustom(customCuttingEdge, cuttingEdge, setCuttingEdge, setCustomCuttingEdge)}
-                />
-                <Button 
-                  onClick={() => addCustom(customCuttingEdge, cuttingEdge, setCuttingEdge, setCustomCuttingEdge)}
-                  variant="outline"
-                >
-                  Add
-                </Button>
-              </div>
-            </Card>
-
-            <div className="flex justify-center pt-4">
-              <Button
-                onClick={handleGenerateIdeas}
-                disabled={loading || interests.length === 0}
-                size="lg"
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg px-8 py-6"
-                data-testid="generate-ideas-btn"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Generating Ideas...
-                  </>
-                ) : (
-                  <>
-                    Generate Research Ideas
-                    <Sparkles className="w-5 h-5 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2: Generated Ideas */}
-        {step === 'ideas' && (
-          <div className="max-w-5xl mx-auto space-y-6">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                Curated Research Ideas
-              </h1>
-              <p className="text-lg text-gray-600">
-                Pick an idea to refine, or start from scratch
-              </p>
-            </div>
-
-            <div className="grid gap-6">
-              {generatedIdeas.map((idea, index) => (
-                <Card 
-                  key={index}
-                  className="p-6 hover:shadow-xl transition-all cursor-pointer border-2 hover:border-indigo-400"
-                  onClick={() => startChat(idea)}
-                  data-testid={`idea-card-${index}`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{idea.title}</h3>
-                      <p className="text-gray-600 mb-3">{idea.description}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {idea.tags?.map((tag, idx) => (
-                          <Badge key={idx} variant="secondary">{tag}</Badge>
+                    <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
+                    
+                    {/* Citations */}
+                    {message.citations && message.citations.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
+                        <span className="text-xs text-gray-500 font-medium">Sources:</span>
+                        {message.citations.map((citation, idx) => (
+                          <CitationBadge key={idx} citation={citation} index={idx} />
                         ))}
                       </div>
-                    </div>
-                    <ChevronRight className="w-6 h-6 text-gray-400" />
+                    )}
                   </div>
-                </Card>
-              ))}
-
-              <Card 
-                className="p-6 border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer"
-                onClick={() => startChat()}
-                data-testid="start-from-scratch"
-              >
-                <div className="text-center py-4">
-                  <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-lg font-semibold text-gray-900 mb-1">Start From Scratch</p>
-                  <p className="text-gray-600">Create your own research idea with AI guidance</p>
                 </div>
-              </Card>
-            </div>
-          </div>
-        )}
 
-        {/* STEP 3: Multi-turn Chat */}
-        {step === 'chat' && (
-          <div className="max-w-5xl mx-auto">
-            <Card className="h-[calc(100vh-200px)] flex flex-col">
-              {/* Chat messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4" data-testid="chat-messages">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        message.role === 'user'
-                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-900'
-                      }`}
-                    >
-                      <div className="whitespace-pre-wrap">{message.content}</div>
-                      {message.citations && message.citations.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-300">
-                          {message.citations.map((citation, idx) => (
-                            <CitationCard key={idx} citation={citation} index={idx} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {loading && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                      <Loader2 className="w-5 h-5 animate-spin text-gray-600" />
-                    </div>
+                {/* Research Cards */}
+                {message.research_cards && message.research_cards.length > 0 && (
+                  <div className="mt-4 space-y-3 ml-12">
+                    {message.research_cards.map((card, cardIdx) => (
+                      <ResearchCard key={cardIdx} card={card} index={cardIdx} />
+                    ))}
                   </div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
-
-              {/* Input area */}
-              <div className="border-t p-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Type your message... (Shift+Enter for new line)"
-                    value={currentMessage}
-                    onChange={(e) => setCurrentMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="resize-none"
-                    rows={2}
-                    data-testid="chat-input"
-                  />
-                  <Button
-                    onClick={sendMessage}
-                    disabled={loading || !currentMessage.trim()}
-                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                    data-testid="send-btn"
-                  >
-                    <Send className="w-5 h-5" />
-                  </Button>
+            ))}
+            
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white border-2 border-gray-200 rounded-2xl px-5 py-4 shadow-md">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                    <span className="text-gray-600">Researching...</span>
+                  </div>
                 </div>
               </div>
-            </Card>
+            )}
+            <div ref={messagesEndRef} />
           </div>
-        )}
+
+          {/* Input */}
+          <div className="border-t-2 border-gray-200 p-4 bg-gray-50">
+            <div className="flex gap-3">
+              <Input
+                placeholder="Ask a question, share thoughts, or request clarification..."
+                value={currentMessage}
+                onChange={(e) => setCurrentMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="flex-1 h-12 border-2 border-gray-300 focus:border-blue-500"
+                data-testid="message-input"
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={loading || !currentMessage.trim()}
+                size="lg"
+                className="h-12 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                data-testid="send-btn"
+              >
+                <Send className="w-5 h-5" />
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Press Enter to send • Shift+Enter for new line
+            </p>
+          </div>
+        </Card>
       </div>
     </div>
   );

@@ -1,185 +1,172 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Sparkles, Brain, Microscope, Shield, MessageSquare, Zap, TrendingUp } from 'lucide-react';
+import { ArrowRight, Sparkles, Search, Lightbulb, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [curiosity, setCuriosity] = useState('');
 
-  const researchAreas = [
-    {
-      icon: <MessageSquare className="w-6 h-6" />,
-      title: "NLP & Translation",
-      color: "from-purple-500 to-pink-500",
-      examples: ["Neural MT", "Multilingual Models", "Low-resource Languages"]
-    },
-    {
-      icon: <Microscope className="w-6 h-6" />,
-      title: "Medical AI",
-      color: "from-green-500 to-emerald-500",
-      examples: ["Disease Classification", "Radiology AI", "Drug Discovery"]
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Security & Fraud",
-      color: "from-red-500 to-orange-500",
-      examples: ["Anomaly Detection", "Transaction Fraud", "Cybersecurity"]
-    },
-    {
-      icon: <Brain className="w-6 h-6" />,
-      title: "Computer Vision",
-      color: "from-blue-500 to-cyan-500",
-      examples: ["Object Detection", "Image Segmentation", "Video Understanding"]
-    },
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: "Reinforcement Learning",
-      color: "from-yellow-500 to-amber-500",
-      examples: ["Game AI", "Robotics", "Autonomous Systems"]
-    },
-    {
-      icon: <TrendingUp className="w-6 h-6" />,
-      title: "Time Series & Finance",
-      color: "from-indigo-500 to-purple-500",
-      examples: ["Stock Prediction", "Forecasting", "Risk Analysis"]
+  const handleStart = () => {
+    if (curiosity.trim()) {
+      navigate('/research', { state: { initialQuery: curiosity } });
+    } else {
+      navigate('/research');
     }
+  };
+
+  const exampleTopics = [
+    { icon: '🧬', text: 'How AI is revolutionizing drug discovery', color: 'from-green-400 to-emerald-600' },
+    { icon: '🤖', text: 'The future of large language models', color: 'from-blue-400 to-indigo-600' },
+    { icon: '🎨', text: 'Generative AI and creative applications', color: 'from-purple-400 to-pink-600' },
+    { icon: '🔒', text: 'AI for cybersecurity and fraud detection', color: 'from-red-400 to-orange-600' },
+    { icon: '🚗', text: 'Self-driving cars and computer vision', color: 'from-cyan-400 to-blue-600' },
+    { icon: '💬', text: 'Natural language processing breakthroughs', color: 'from-violet-400 to-purple-600' }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
               <span className="text-xl font-bold text-gray-900">ResearchAI</span>
-              <div className="text-xs text-gray-500">Powered by Perplexity</div>
+              <div className="text-xs text-gray-500">Your AI Research Guide</div>
             </div>
           </div>
-          <Button 
-            onClick={() => navigate('/research')}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
-            data-testid="nav-research-btn"
-          >
-            Start Research
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-20 pb-12">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full text-sm font-medium mb-8 shadow-sm">
+      <section className="max-w-5xl mx-auto px-6 pt-24 pb-16">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6 shadow-sm">
             <Sparkles className="w-4 h-4" />
-            Interactive Multi-Turn Research Assistant
+            Powered by Perplexity AI
           </div>
           
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-            From Idea to
-            <span className="block bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Research Blueprint
+          <h1 className="text-6xl sm:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            What do you want to
+            <span className="block bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              learn about?
             </span>
           </h1>
           
-          <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Interactive AI assistant that guides you through a conversational journey - from selecting your interests 
-            to crafting a cutting-edge ML research proposal with citations and actionable plans.
+          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            Start with your curiosity. I'll guide you through cutting-edge research, 
+            explain the concepts, and help you discover novel ideas.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg"
-              onClick={() => navigate('/research')}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-base px-8 py-6 shadow-xl"
-              data-testid="hero-start-btn"
-            >
-              Begin Your Research Journey
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
+          {/* Main Input */}
+          <div className="max-w-3xl mx-auto mb-8">
+            <div className="flex gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="e.g., using AI to detect diseases early, building better recommendation systems..."
+                  value={curiosity}
+                  onChange={(e) => setCuriosity(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleStart()}
+                  className="h-16 pl-12 pr-4 text-lg border-2 border-gray-200 focus:border-blue-500 rounded-2xl shadow-lg"
+                  data-testid="curiosity-input"
+                />
+              </div>
+              <Button
+                onClick={handleStart}
+                size="lg"
+                className="h-16 px-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-2xl shadow-lg text-lg"
+                data-testid="start-journey-btn"
+              >
+                Start Journey
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Example Topics */}
+        <div className="max-w-4xl mx-auto">
+          <p className="text-center text-sm text-gray-500 mb-6 flex items-center justify-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            Or explore these trending topics
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {exampleTopics.map((topic, idx) => (
+              <Card
+                key={idx}
+                onClick={() => {
+                  setCuriosity(topic.text);
+                  navigate('/research', { state: { initialQuery: topic.text } });
+                }}
+                className="p-4 cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 border-gray-100 hover:border-blue-300 group"
+                data-testid={`example-${idx}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 bg-gradient-to-br ${topic.color} rounded-xl flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition-transform`}>
+                    {topic.icon}
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900 flex-1">
+                    {topic.text}
+                  </p>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Research Areas Grid */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Explore Cutting-Edge Research Areas
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Choose from curated ML research domains with pre-generated ideas and expert guidance
+      {/* How It Works */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-12 text-white shadow-2xl">
+          <h2 className="text-3xl font-bold mb-4 text-center">How Your Research Journey Works</h2>
+          <p className="text-center text-blue-100 mb-12 max-w-2xl mx-auto">
+            A guided conversation that takes you from curiosity to actionable research idea
           </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {researchAreas.map((area, index) => (
-            <Card 
-              key={index} 
-              className="group p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-white border-2 border-gray-100 cursor-pointer"
-              onClick={() => navigate('/research', { state: { selectedArea: area.title } })}
-              data-testid={`area-card-${index}`}
-            >
-              <div className={`w-14 h-14 bg-gradient-to-br ${area.color} rounded-xl flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
-                {area.icon}
+          
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
+                💭
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                {area.title}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {area.examples.map((example, idx) => (
-                  <span key={idx} className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                    {example}
-                  </span>
-                ))}
+              <h3 className="font-semibold mb-2">Share Curiosity</h3>
+              <p className="text-sm text-blue-100">Tell me what fascinates you</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
+                🔍
               </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-3xl p-12 text-white shadow-2xl">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-              How It Works
-            </h2>
-            <div className="grid md:grid-cols-3 gap-8 mt-12">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                  1
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Share Your Interests</h3>
-                <p className="text-white/80 text-sm">Tell us about your ML interests, frameworks, and cutting-edge topics you want to explore</p>
+              <h3 className="font-semibold mb-2">Explore Research</h3>
+              <p className="text-sm text-blue-100">See cutting-edge work with citations</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
+                🚀
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                  2
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Conversational Refinement</h3>
-                <p className="text-white/80 text-sm">Multi-turn AI chat helps refine your idea with grounded research and expert insights</p>
+              <h3 className="font-semibold mb-2">Discover Ideas</h3>
+              <p className="text-sm text-blue-100">Find novel directions & gaps</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
+                🎯
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                  3
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Research Blueprint</h3>
-                <p className="text-white/80 text-sm">Get a complete research plan with citations, task specs, and actionable next steps</p>
-              </div>
+              <h3 className="font-semibold mb-2">Build Plan</h3>
+              <p className="text-sm text-blue-100">Get actionable next steps</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-gray-50 py-8 mt-16">
+      <footer className="border-t bg-white/80 py-8 mt-16">
         <div className="max-w-7xl mx-auto px-6 text-center text-gray-600">
-          <p>Built for Perplexity Hackathon 2025 • Powered by Perplexity AI + Kaggle</p>
+          <p>Built for Perplexity Hackathon 2025 • Powered by Perplexity AI</p>
         </div>
       </footer>
     </div>
