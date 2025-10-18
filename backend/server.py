@@ -231,8 +231,8 @@ Break down complex topics into understandable explanations."""
         # Add current message
         messages_to_send.append({"role": "user", "content": request.message})
         
-        # Call Perplexity with appropriate model
-        model = "sonar-deep-research" if request.is_initial else "sonar-pro"
+        # Call Perplexity with sonar-pro (faster, still comprehensive)
+        model = "sonar-pro"
         
         response = perplexity_client.chat.completions.create(
             model=model,
