@@ -152,8 +152,10 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Push notebook to Kaggle and return shareable link"
     - "Display Kaggle shareable link in Ship page"
   stuck_tasks:
+    - "Push notebook to Kaggle and return shareable link"
     - "Display Kaggle shareable link in Ship page"
   test_all: false
   test_priority: "stuck_first"
