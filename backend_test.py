@@ -325,15 +325,16 @@ def test_notebook_download_verification():
         return False
 
 def run_all_tests():
-    """Run all backend tests in sequence"""
-    print("=" * 60)
-    print("ALEXANDRIA BACKEND API TESTING - FULL FLOW VERIFICATION")
-    print("=" * 60)
+    """Run all backend tests in sequence - TESTING SLUG FIX FOR KAGGLE PUSH"""
+    print("=" * 70)
+    print("ALEXANDRIA BACKEND API TESTING - SLUG FIX VERIFICATION")
+    print("=" * 70)
+    print(f"🎯 TESTING SLUG FIX FOR MULTI-WORD TITLES")
     print(f"Base URL: {BASE_URL}")
     print(f"Session ID: {SESSION_ID}")
     print(f"Topic: {TOPIC}")
     print(f"Dataset: {DATASET_NAME}")
-    print("=" * 60)
+    print("=" * 70)
     print()
     
     results = {}
