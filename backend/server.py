@@ -294,7 +294,7 @@ Be specific and comprehensive."""
         
         elif request.step == 5:
             # STEP 5: Kaggle Setup & Notebook
-            selected_dataset = request.selected_data.get('dataset_name', 'dataset')
+            selected_dataset = request.selected_data.get('dataset_name', 'dataset') if request.selected_data else 'dataset'
             
             # Get Kaggle competition info if available
             kaggle_info = ""
