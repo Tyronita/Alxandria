@@ -629,7 +629,7 @@ kaggle competitions submit -c competition-name -f submission.csv -m "Baseline su
 async def download_notebook(request: NotebookRequest):
     """Generate and download Jupyter notebook"""
     try:
-        notebook = generate_notebook(request.topic, request.dataset_name)
+        notebook = await generate_notebook_from_research(request.session_id, request.topic, request.dataset_name)
         
         # Convert to JSON string
         notebook_json = json.dumps(notebook, indent=2)
@@ -648,6 +648,80 @@ async def download_notebook(request: NotebookRequest):
     except Exception as e:
         logging.error(f"Notebook generation error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/ship/push-to-kaggle")
+async def push_to_kaggle(request: NotebookRequest):
+    """Generate notebook with research data and push to Kaggle, return shareable link"""
+    try:
+        # Generate notebook with ALL research data
+        notebook = await generate_notebook_from_research(request.session_id, request.topic, request.dataset_name)
+        
+        # Create safe kernel slug
+        safe_topic = request.topic.lower().replace(' ', '-').replace('_', '-')[:50]
+        safe_topic = ''.join(c for c in safe_topic if c.isalnum() or c == '-')
+        kernel_slug = f"alexandria-{safe_topic}"
+        
+        # Create temp directory for kernel
+        with tempfile.TemporaryDirectory() as temp_dir:
+            notebook_path = os.path.join(temp_dir, "notebook.ipynb")
+            metadata_path = os.path.join(temp_dir, "kernel-metadata.json")
+            
+            # Write notebook file
+            with open(notebook_path, 'w') as f:
+                json.dump(notebook, f, indent=2)
+            
+            # Create kernel metadata
+            metadata = {
+                "id": f"{kaggle_username}/{kernel_slug}",
+                "title": f"Alexandria: {request.topic}",
+                "code_file": "notebook.ipynb",
+                "language": "python",
+                "kernel_type": "notebook",
+                "is_private": False,
+                "enable_gpu": True,
+                "enable_internet": True,
+                "dataset_sources": [],
+                "competition_sources": [],
+                "kernel_sources": []
+            }
+            
+            # Try to extract dataset slug from dataset_name
+            if request.dataset_name:
+                # Format: owner/dataset-name or just dataset-name
+                dataset_slug = request.dataset_name.strip()
+                if '/' not in dataset_slug:
+                    # If no owner, might be a Kaggle competition or public dataset
+                    # We'll try to use it as-is
+                    pass
+                metadata["dataset_sources"].append(dataset_slug)
+            
+            # Write metadata file
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            
+            # Push to Kaggle using CLI
+            logging.info(f"Pushing kernel to Kaggle: {kernel_slug}")
+            result = run_kaggle_command([
+                'kaggle', 'kernels', 'push', '-p', temp_dir
+            ])
+            
+            logging.info(f"Kaggle push result: {result}")
+            
+            # Generate shareable link
+            kaggle_link = f"https://www.kaggle.com/code/{kaggle_username}/{kernel_slug}"
+            
+            return {
+                "status": "success",
+                "message": "Notebook pushed to Kaggle successfully!",
+                "kaggle_link": kaggle_link,
+                "kernel_slug": kernel_slug,
+                "username": kaggle_username,
+                "output": result
+            }
+            
+    except Exception as e:
+        logging.error(f"Kaggle push error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to push to Kaggle: {str(e)}")
 
 @api_router.get("/ship/requirements")
 async def download_requirements():
