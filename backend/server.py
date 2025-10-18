@@ -269,11 +269,9 @@ Break down complex topics into understandable explanations."""
             detail=f"Failed to process conversation: {str(e)}"
         )
 
-@api_router.post("/chat/message", response_model=ChatMessageResponse)
-async def send_chat_message(request: ChatMessageRequest):
-    """
-    Handle multi-turn conversational research refinement
-    """
+# Removed old chat/message endpoint - replaced with /chat/converse
+# @api_router.post("/chat/message", response_model=ChatMessageResponse)
+# async def send_chat_message(request: ChatMessageRequest):
     try:
         # Build conversation context
         system_prompt = """You are an expert AI research assistant. Help refine the user's research idea through thoughtful questions and suggestions.
