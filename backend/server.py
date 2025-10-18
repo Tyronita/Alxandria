@@ -196,8 +196,8 @@ class ChatConverseResponse(BaseModel):
     citations: List[Citation] = []
     research_cards: List[ResearchCardModel] = []
 
-@api_router.post("/chat/generate-ideas", response_model=GenerateIdeasResponse)
-async def generate_research_ideas(request: GenerateIdeasRequest):
+@api_router.post("/chat/converse", response_model=ChatConverseResponse)
+async def conversational_research(request: ChatConverseRequest):
     """
     Generate curated research ideas based on user interests
     """
