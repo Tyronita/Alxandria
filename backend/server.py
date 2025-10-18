@@ -704,11 +704,10 @@ async def push_to_kaggle(request: NotebookRequest):
             with open(notebook_path, 'w') as f:
                 json.dump(notebook, f, indent=2)
             
-            # Create kernel metadata - all fields required for Kaggle API
+            # Create kernel metadata - for new kernels, don't specify id
             # Title should resolve to the same slug to avoid 409 conflicts
             title = kernel_slug.replace('-', ' ').title()
             metadata = {
-                "id": f"{kaggle_username}/{kernel_slug}",  # Required format: username/slug
                 "title": title,  # Title should match slug format
                 "code_file": "notebook.ipynb",
                 "language": "python",
@@ -718,8 +717,7 @@ async def push_to_kaggle(request: NotebookRequest):
                 "enable_internet": True,
                 "dataset_sources": [],
                 "competition_sources": [],
-                "kernel_sources": [],
-                "model_sources": []  # Required field for Kaggle API
+                "kernel_sources": []
             }
             
             # Only add dataset if it has proper format (username/dataset-name)
