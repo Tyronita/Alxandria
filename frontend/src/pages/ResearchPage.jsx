@@ -32,6 +32,9 @@ export default function ResearchPage() {
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(Date.now().toString());
   const [showChecklist, setShowChecklist] = useState(false);
+  const [currentStage, setCurrentStage] = useState('curiosity');
+  const [completedStages, setCompletedStages] = useState([]);
+  const [showBlueprint, setShowBlueprint] = useState(false);
 
   useEffect(() => {
     const initialQuery = location.state?.initialQuery;
