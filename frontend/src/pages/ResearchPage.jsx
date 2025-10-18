@@ -223,6 +223,16 @@ export default function ResearchPage() {
 
       {/* Chat Interface */}
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Blueprint Progress */}
+        {messages.length > 2 && (
+          <div className="mb-4">
+            <BlueprintProgress 
+              currentStage={currentStage} 
+              completedStages={completedStages} 
+            />
+          </div>
+        )}
+        
         <Card className="min-h-[calc(100vh-180px)] flex flex-col shadow-xl border-2 border-gray-200">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6" data-testid="chat-messages">
