@@ -166,6 +166,27 @@ def evaluate(model, dataloader, device):
     toast.success('Code copied to clipboard!');
   };
 
+  const handlePushToKaggle = async () => {
+    setPushing(true);
+    toast.info('Pushing notebook to Kaggle...');
+    
+    try {
+      const response = await axios.post(`${API}/ship/push-to-kaggle`, {
+        session_id: sessionId,
+        topic: topic,
+        dataset_name: dataset
+      });
+      
+      setKaggleLink(response.data.kaggle_link);
+      toast.success('Notebook published to Kaggle!');
+    } catch (error) {
+      console.error('Push to Kaggle error:', error);
+      toast.error(`Failed to push to Kaggle: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setPushing(false);
+    }
+  };
+
   const [automationStatus, setAutomationStatus] = useState({
     kaggle: { status: 'pending', message: '' },
     dataset: { status: 'pending', message: '' },
