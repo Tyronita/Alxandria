@@ -298,7 +298,7 @@ def test_notebook_download_verification():
 def run_all_tests():
     """Run all backend tests in sequence"""
     print("=" * 60)
-    print("ALEXANDRIA BACKEND API TESTING")
+    print("ALEXANDRIA BACKEND API TESTING - FULL FLOW VERIFICATION")
     print("=" * 60)
     print(f"Base URL: {BASE_URL}")
     print(f"Session ID: {SESSION_ID}")
@@ -321,8 +321,14 @@ def run_all_tests():
     # Test 4: Research Step 3 (Datasets)
     results["step3"] = test_research_step(3, ["dataset", "kaggle", "source"])
     
-    # Test 5: Push to Kaggle (main feature)
+    # Test 5: Research Step 4 (Implementation Plan)
+    results["step4"] = test_research_step(4, ["implementation", "plan", "strategy"])
+    
+    # Test 6: Push to Kaggle (main feature)
     results["kaggle_push"] = test_push_to_kaggle()
+    
+    # Test 7: Notebook Download Verification (critical test)
+    results["notebook_verification"] = test_notebook_download_verification()
     
     # Summary
     print("=" * 60)
@@ -334,15 +340,18 @@ def run_all_tests():
     
     for test_name, result in results.items():
         status = "✅ PASS" if result else "❌ FAIL"
-        print(f"{test_name.upper():<15} {status}")
+        print(f"{test_name.upper():<20} {status}")
     
     print(f"\nOVERALL: {passed}/{total} tests passed")
     
     if passed == total:
         print("🎉 ALL TESTS PASSED!")
+        print("✅ Notebooks pushed to Kaggle contain actual research content!")
         return True
     else:
         print("⚠️  SOME TESTS FAILED - Check logs above")
+        if not results.get("notebook_verification", False):
+            print("❌ CRITICAL: Notebook verification failed - notebooks may be empty!")
         return False
 
 if __name__ == "__main__":
