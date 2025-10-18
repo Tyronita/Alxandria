@@ -125,15 +125,18 @@ backend:
 frontend:
   - task: "Display Kaggle shareable link in Ship page"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/pages/ShipPage.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added 'Push to Kaggle' button in ShipPage that calls the new endpoint. When successful, displays a green success card with the shareable Kaggle link and 'Open in Kaggle' button."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE: Research flow gets stuck on Step 1 - Perplexity API calls are initiated but Step 1 never completes, preventing users from reaching Ship page. Landing page works correctly, navigation to research page works, but research steps don't progress. Backend logs show Perplexity API returning 200 responses but frontend remains in loading state indefinitely. Also found Kaggle push errors in logs: 'Dataset must be specified in the form of {username}/{dataset-slug}'. Cannot test Ship page functionality without completing research flow first."
 
 metadata:
   created_by: "main_agent"
