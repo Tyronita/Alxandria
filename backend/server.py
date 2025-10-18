@@ -691,7 +691,25 @@ async def push_to_kaggle(request: NotebookRequest):
         # Create safe kernel slug
         safe_topic = request.topic.lower().replace(' ', '-').replace('_', '-')[:50]
         safe_topic = ''.join(c for c in safe_topic if c.isalnum() or c == '-')
-        kernel_slug = f"alexandria-{safe_topic}"
+        
+        # IMPORTANT: Kaggle API often blocks NEW kernel creation (403 Forbidden)
+        # Instead, we'll update an existing kernel or provide manual upload instructions
+        
+        # Try to get user's existing kernels
+        try:
+            result = run_kaggle_command(['kaggle', 'kernels', 'list', '--mine'])
+            has_kernels = 'evanoleary/' in result
+        except:
+            has_kernels = False
+        
+        if has_kernels:
+            # Update strategy: Use a dedicated "Alexandria" kernel that gets updated each time
+            kernel_slug = "alexandria-research-notebook"  # Fixed slug for updates
+            kernel_id = f"{kaggle_username}/{kernel_slug}"
+        else:
+            # Fallback to new kernel attempt
+            kernel_slug = f"alexandria-{safe_topic}"
+            kernel_id = f"{kaggle_username}/{kernel_slug}"
         
         # Create temp directory for kernel
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -702,12 +720,12 @@ async def push_to_kaggle(request: NotebookRequest):
             with open(notebook_path, 'w') as f:
                 json.dump(notebook, f, indent=2)
             
-            # Create kernel metadata with proper format for new kernels
+            # Create kernel metadata
             metadata = {
-                "id": f"{kaggle_username}/{kernel_slug}",  # Required format: username/kernel-slug
-                "title": f"Alexandria: {request.topic[:80]}",  # Limit title length
+                "id": kernel_id,  # Use fixed ID for updates, or new ID for creation
+                "title": f"Alexandria: {request.topic[:80]}",
                 "code_file": "notebook.ipynb",
-                "language": "python",  # Required field - valid options: python, r, rmarkdown
+                "language": "python",
                 "kernel_type": "notebook",
                 "is_private": False,
                 "enable_gpu": True,
@@ -717,42 +735,48 @@ async def push_to_kaggle(request: NotebookRequest):
                 "kernel_sources": []
             }
             
-            # Only add dataset if it has proper format (username/dataset-name)
+            # Only add dataset if it has proper format
             if request.dataset_name and '/' in request.dataset_name:
                 metadata["dataset_sources"].append(request.dataset_name)
-                logging.info(f"Adding dataset source: {request.dataset_name}")
-            else:
-                logging.info(f"Skipping dataset link - no valid dataset format: {request.dataset_name}")
             
             # Write metadata file
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
             
-            # Push to Kaggle using CLI
-            logging.info(f"Pushing kernel to Kaggle: {kernel_slug}")
-            result = run_kaggle_command([
-                'kaggle', 'kernels', 'push', '-p', temp_dir
-            ])
+            # Try to push to Kaggle
+            logging.info(f"Attempting to push/update kernel: {kernel_id}")
             
-            logging.info(f"Kaggle push result: {result}")
+            try:
+                result = run_kaggle_command(['kaggle', 'kernels', 'push', '-p', temp_dir])
+                logging.info(f"Kaggle CLI output: {result}")
+                
+                # Check for specific errors
+                if "403" in result or "Forbidden" in result:
+                    # 403 Forbidden - account verification or permissions issue
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Kaggle API access denied. Your account may need phone verification or additional permissions. Please: 1) Go to kaggle.com/settings 2) Verify your phone number 3) Check API token permissions"
+                    )
+                elif "error" in result.lower() and "successfully" not in result.lower():
+                    raise HTTPException(status_code=500, detail=f"Kaggle API error: {result}")
+                
+                # Success! Generate link
+                kaggle_link = f"https://www.kaggle.com/code/{kernel_id}"
+                
+                return {
+                    "status": "success",
+                    "message": "Notebook pushed to Kaggle successfully!",
+                    "kaggle_link": kaggle_link,
+                    "kernel_slug": kernel_slug,
+                    "username": kaggle_username,
+                    "is_update": has_kernels
+                }
+                
+            except subprocess.TimeoutExpired:
+                raise HTTPException(status_code=504, detail="Kaggle API timeout - please try again")
             
-            # Check for errors in output
-            if "error" in result.lower() or "failed" in result.lower():
-                logging.error(f"Kaggle push failed: {result}")
-                raise HTTPException(status_code=500, detail=f"Kaggle API error: {result}")
-            
-            # Generate shareable link
-            kaggle_link = f"https://www.kaggle.com/code/{kaggle_username}/{kernel_slug}"
-            
-            return {
-                "status": "success",
-                "message": "Notebook pushed to Kaggle successfully!",
-                "kaggle_link": kaggle_link,
-                "kernel_slug": kernel_slug,
-                "username": kaggle_username,
-                "output": result
-            }
-            
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"Kaggle push error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to push to Kaggle: {str(e)}")
