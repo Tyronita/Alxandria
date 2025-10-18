@@ -68,16 +68,21 @@ def extract_citations(response) -> List[Citation]:
             citations.append(Citation(title=f"[{i+1}]", url=url))
     return citations
 
-def run_kaggle_command(command: List[str]) -> str:
-    kaggle_config = {"username": kaggle_username, "key": kaggle_key}
+def run_kaggle_command(command: List[str], username: str = None, api_key: str = None) -> str:
+    """Run Kaggle CLI command with provided or default credentials"""
+    # Use provided credentials or fall back to env variables
+    kaggle_user = username or kaggle_username
+    kaggle_api_key = api_key or kaggle_key
+    
+    kaggle_config = {"username": kaggle_user, "key": kaggle_api_key}
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(kaggle_config, f)
         temp_file = f.name
     
     try:
         env = os.environ.copy()
-        env['KAGGLE_USERNAME'] = kaggle_username
-        env['KAGGLE_KEY'] = kaggle_key
+        env['KAGGLE_USERNAME'] = kaggle_user
+        env['KAGGLE_KEY'] = kaggle_api_key
         # Add venv bin to PATH to find kaggle command
         if '/root/.venv/bin' not in env.get('PATH', ''):
             env['PATH'] = f"/root/.venv/bin:{env.get('PATH', '')}"
