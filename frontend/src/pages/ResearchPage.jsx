@@ -199,12 +199,25 @@ export default function ResearchPage() {
             </div>
           </div>
           
-          {showChecklist && (
-            <Badge variant="secondary" className="bg-green-100 text-green-700">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              Checklist Available
-            </Badge>
-          )}
+          <div className="flex items-center gap-3">
+            {showChecklist && (
+              <Badge variant="secondary" className="bg-green-100 text-green-700">
+                <TrendingUp className="w-3 h-3 mr-1" />
+                Checklist Available
+              </Badge>
+            )}
+            {showBlueprint && (
+              <Button
+                onClick={handleGenerateBlueprint}
+                size="sm"
+                className="bg-gradient-to-r from-green-600 to-emerald-600"
+                data-testid="generate-blueprint-btn"
+              >
+                <Rocket className="w-4 h-4 mr-2" />
+                Generate Full Blueprint
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
