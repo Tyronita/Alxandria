@@ -178,37 +178,23 @@ def run_kaggle_command(command: List[str]) -> str:
 async def root():
     return {"message": "Research Assistant API", "version": "1.0.0"}
 
-# ============ NEW CHAT ENDPOINTS ============
+# ============ NEW CONVERSATIONAL CHAT ============
 
-class GenerateIdeasRequest(BaseModel):
-    interests: List[str]
-    frameworks: List[str] = []
-    cutting_edge: List[str] = []
-
-class ResearchIdea(BaseModel):
+class ResearchCardModel(BaseModel):
+    type: str  # 'research', 'idea', 'future'
     title: str
     description: str
-    tags: List[str]
-    difficulty: str
 
-class GenerateIdeasResponse(BaseModel):
-    ideas: List[ResearchIdea]
-
-class ChatMessage(BaseModel):
-    role: str
-    content: str
-    timestamp: str
-    citations: Optional[List[Citation]] = []
-
-class ChatMessageRequest(BaseModel):
-    conversation_id: str
+class ChatConverseRequest(BaseModel):
+    session_id: str
     message: str
-    context: Dict[str, Any]
-    messages: List[Dict[str, Any]]
+    is_initial: bool = False
+    conversation_history: List[Dict[str, Any]] = []
 
-class ChatMessageResponse(BaseModel):
+class ChatConverseResponse(BaseModel):
     response: str
-    citations: List[Citation]
+    citations: List[Citation] = []
+    research_cards: List[ResearchCardModel] = []
 
 @api_router.post("/chat/generate-ideas", response_model=GenerateIdeasResponse)
 async def generate_research_ideas(request: GenerateIdeasRequest):
