@@ -197,7 +197,7 @@ async def generate_notebook_from_research(session_id: str, topic: str, dataset: 
             {
                 "cell_type": "markdown",
                 "metadata": {},
-                "source": ["## 2. Load Dataset"]
+                "source": ["## 2. Load Dataset\n", "\n", f"Loading dataset: **{dataset}**"]
             },
             {
                 "cell_type": "code",
@@ -205,13 +205,20 @@ async def generate_notebook_from_research(session_id: str, topic: str, dataset: 
                 "metadata": {},
                 "outputs": [],
                 "source": [
-                    "# TODO: Download dataset\n",
-                    f"# kaggle datasets download -d {dataset}\n",
+                    "# Download and load the dataset\n",
+                    "import os\n",
                     "\n",
-                    "# Load data\n",
-                    "# df = pd.read_csv('path/to/data.csv')\n",
+                    f"# Dataset: {dataset}\n",
+                    "# If this is a Kaggle dataset, uncomment and run:\n",
+                    f"# !kaggle datasets download -d {dataset}\n",
+                    "# !unzip {dataset}.zip -d ./data\n",
+                    "\n",
+                    "# For now, load your data here:\n",
+                    "# df = pd.read_csv('path/to/your/data.csv')\n",
                     "# print(df.head())\n",
-                    "# print(df.shape)"
+                    "# print(f'Dataset shape: {df.shape}')\n",
+                    "\n",
+                    "print(f'Ready to load dataset: {dataset}')"
                 ]
             },
             {
