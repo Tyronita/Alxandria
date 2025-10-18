@@ -216,21 +216,21 @@ async def generate_research_ideas(request: GenerateIdeasRequest):
     Generate curated research ideas based on user interests
     """
     try:
-        system_prompt = \"\"\"You are a research advisor. Generate 4-5 specific, cutting-edge ML research ideas.
+        system_prompt = """You are a research advisor. Generate 4-5 specific, cutting-edge ML research ideas.
         For each idea, provide:
         - A compelling title
         - A 2-3 sentence description
         - 3-4 relevant tags
         - Difficulty level (Beginner/Intermediate/Advanced)
         
-        Make ideas specific, actionable, and aligned with current research trends.\"\"\"
+        Make ideas specific, actionable, and aligned with current research trends."""
         
-        user_prompt = f\"\"\"Generate research ideas for someone interested in:
+        user_prompt = f"""Generate research ideas for someone interested in:
         Areas: {', '.join(request.interests)}
         Frameworks: {', '.join(request.frameworks) if request.frameworks else 'Any'}
         Cutting-edge topics: {', '.join(request.cutting_edge) if request.cutting_edge else 'General ML'}
         
-        Focus on practical, implementable ideas that combine these interests.\"\"\"
+        Focus on practical, implementable ideas that combine these interests."""
         
         response = perplexity_client.chat.completions.create(
             model="sonar-pro",
