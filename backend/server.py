@@ -5,185 +5,63 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
 from openai import OpenAI
 import json
-import subprocess
-import tempfile
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+# MongoDB
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Initialize Perplexity client (using OpenAI SDK with Perplexity endpoint)
+# Perplexity client
 perplexity_client = OpenAI(
     api_key=os.environ.get('PERPLEXITY_API_KEY'),
     base_url="https://api.perplexity.ai"
 )
 
-# Setup Kaggle credentials
-kaggle_username = os.environ.get('KAGGLE_USERNAME')
-kaggle_key = os.environ.get('KAGGLE_KEY')
-
-app = FastAPI(title="Research Assistant API")
+app = FastAPI(title="Research Blueprint API")
 api_router = APIRouter(prefix="/api")
 
 # ============ MODELS ============
-
-class ResearchQuery(BaseModel):
-    query: str = Field(..., min_length=1)
-    domain_filter: Optional[List[str]] = None
-    recency_filter: Optional[str] = None
 
 class Citation(BaseModel):
     title: str
     url: str
     snippet: Optional[str] = None
-    date: Optional[str] = None
 
-class ResearchResponse(BaseModel):
-    query_id: str
-    problem_statement: str
-    scope: str
-    assumptions: List[str]
-    risks: List[str]
-    candidate_metrics: List[str]
-    citations: List[Citation]
-    raw_content: str
+class ResearchPaper(BaseModel):
+    title: str
+    authors: str
+    contribution: str
+    paper_url: str
+    code_url: Optional[str] = None
 
-class TaskSpecRequest(BaseModel):
-    query_id: str
-    focus_area: Optional[str] = None
+class ResearchGap(BaseModel):
+    title: str
+    problem: str
+    solution: str
+    impact: str
+    libraries: List[str]
 
-class TaskSpec(BaseModel):
-    task_id: str
-    query_id: str
-    task_name: str
-    dataset_candidates: List[str]
-    target_metric: str
-    constraints: List[str]
-    compute_budget: str
-    deliverables: List[str]
-    citations: List[Citation]
-
-class SOTAReviewRequest(BaseModel):
-    topic: str
-    domain_filter: Optional[List[str]] = None
-
-class SOTAReview(BaseModel):
-    review_id: str
-    topic: str
-    summary: str
-    key_findings: List[str]
-    gaps: List[str]
-    citations: List[Citation]
-
-class TechniquesRequest(BaseModel):
-    dataset_type: str
-    problem_type: str
-
-class Technique(BaseModel):
+class DatasetInfo(BaseModel):
     name: str
-    description: str
-    category: str
-    sources: List[Citation]
-
-class TechniquesResponse(BaseModel):
-    techniques: List[Technique]
-
-class RecommendRequest(BaseModel):
-    query_id: str
-    context: Optional[str] = None
-
-class Recommendation(BaseModel):
-    recommendation_id: str
-    technique_name: str
-    why_it_fits: str
-    expected_metric_gain: str
-    risks: List[str]
-    evidence: List[Citation]
-
-class KaggleDataset(BaseModel):
-    title: str
-    ref: str
-    subtitle: str
     size: str
-    last_updated: str
+    format: str
+    source: str
+    sota_metrics: Dict[str, Any]
+    access_links: Dict[str, str]
 
-class KaggleCompetition(BaseModel):
-    title: str
-    ref: str
-    description: str
-    deadline: str
-    prize: str
-
-# ============ HELPER FUNCTIONS ============
-
-def extract_citations(response) -> List[Citation]:
-    """Extract citations from Perplexity response"""
-    citations = []
-    if hasattr(response, 'search_results'):
-        for result in response.search_results:
-            citations.append(Citation(
-                title=result.get('title', ''),
-                url=result.get('url', ''),
-                snippet=result.get('snippet', ''),
-                date=result.get('date', '')
-            ))
-    return citations
-
-def run_kaggle_command(command: List[str]) -> str:
-    """Run kaggle CLI command with credentials"""
-    env = os.environ.copy()
-    
-    # Create temporary kaggle.json
-    kaggle_config = {
-        "username": kaggle_username,
-        "key": kaggle_key
-    }
-    
-    # Write to temporary file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-        json.dump(kaggle_config, f)
-        temp_file = f.name
-    
-    try:
-        # Set environment to use temp config
-        env['KAGGLE_CONFIG_DIR'] = os.path.dirname(temp_file)
-        env['KAGGLE_USERNAME'] = kaggle_username
-        env['KAGGLE_KEY'] = kaggle_key
-        
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            env=env
-        )
-        return result.stdout
-    finally:
-        # Clean up
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
-
-# ============ ROUTES ============
-
-@api_router.get("/")
-async def root():
-    return {"message": "Research Assistant API", "version": "1.0.0"}
-
-# ============ NEW CONVERSATIONAL CHAT ============
-
-class ResearchCardModel(BaseModel):
-    type: str  # 'research', 'idea', 'future'
-    title: str
-    description: str
+class BlueprintStage(BaseModel):
+    stage: str  # 'curiosity', 'research', 'gaps', 'dataset', 'implementation'
+    completed: bool
+    data: Dict[str, Any]
 
 class ChatConverseRequest(BaseModel):
     session_id: str
@@ -194,72 +72,179 @@ class ChatConverseRequest(BaseModel):
 class ChatConverseResponse(BaseModel):
     response: str
     citations: List[Citation] = []
-    research_cards: List[ResearchCardModel] = []
+    blueprint_update: Optional[Dict[str, Any]] = None
+    show_blueprint: bool = False
+
+# ============ HELPERS ============
+
+def extract_citations(response) -> List[Citation]:
+    """Extract citations from Perplexity response"""
+    citations = []
+    if hasattr(response, 'citations'):
+        for i, url in enumerate(response.citations or []):
+            citations.append(Citation(
+                title=f"Source {i+1}",
+                url=url,
+                snippet=""
+            ))
+    return citations
+
+def detect_blueprint_stage(message: str, conversation_history: List) -> str:
+    """Detect what stage of blueprint creation we're at"""
+    message_lower = message.lower()
+    history_text = " ".join([m.get('content', '').lower() for m in conversation_history[-3:]])
+    
+    # Stage detection logic
+    if any(word in message_lower for word in ['want to learn', 'interested in', 'curious about']):
+        return 'curiosity'
+    elif any(word in history_text for word in ['papers', 'research', 'literature', 'state of the art']):
+        return 'papers'
+    elif any(word in history_text for word in ['gaps', 'opportunities', 'novel', 'future directions']):
+        return 'gaps'
+    elif any(word in message_lower + history_text for word in ['dataset', 'data', 'benchmark']):
+        return 'dataset'
+    elif any(word in message_lower + history_text for word in ['implement', 'code', 'build', 'ready']):
+        return 'implementation'
+    
+    return 'unknown'
+
+# ============ ROUTES ============
+
+@api_router.get("/")
+async def root():
+    return {"message": "Research Blueprint API", "version": "2.0.0"}
 
 @api_router.post("/chat/converse", response_model=ChatConverseResponse)
 async def conversational_research(request: ChatConverseRequest):
     """
-    Guided conversational research assistant
+    Guided conversational research that builds comprehensive blueprints
     """
     try:
-        # Build system prompt for guiding conversation
-        system_prompt = """You are an expert AI research guide. Your role is to guide users through a research journey:
-
-1. UNDERSTAND their curiosity deeply
-2. SHOW them relevant cutting-edge research with citations
-3. EXPLAIN concepts clearly and engagingly
-4. EXPLORE future directions and novel ideas
-5. TEACH about relevant technologies and frameworks
-6. GUIDE them toward a concrete, actionable research idea
-
-Be conversational, enthusiastic, and educational. Use citations to back up claims. 
-Ask thoughtful follow-up questions to refine their interests.
-Break down complex topics into understandable explanations."""
+        # Detect blueprint stage
+        stage = detect_blueprint_stage(request.message, request.conversation_history)
         
-        # Build message history for API
+        # Build system prompt based on stage
+        if stage == 'curiosity':
+            system_prompt = """You are a research mentor. The user just shared their curiosity. Your job:
+
+1. ACKNOWLEDGE their interest warmly
+2. ASK clarifying questions to understand depth (beginner vs advanced)
+3. SUGGEST exploring: relevant papers, current research gaps, and available datasets
+4. GUIDE them to the next step: "Would you like me to find the top 3 research papers in this area?"
+
+Be conversational and encouraging."""
+        
+        elif stage == 'papers':
+            system_prompt = """You are a research librarian. Find the 3 MOST RELEVANT papers for their topic.
+
+For EACH paper, provide:
+- Title and authors
+- Key contribution (1 sentence)
+- Link to paper (arxiv/IEEE/ACL)
+- Link to code repository if available (GitHub)
+
+Format as a markdown table. Then ask: "Would you like me to identify research gaps and novel opportunities?"
+
+Use search to find actual papers with working links."""
+        
+        elif stage == 'gaps':
+            system_prompt = """You are a research strategist. Identify 2-3 SPECIFIC research gaps.
+
+For EACH gap:
+- **Title**: Concise gap name
+- **Problem**: What's missing in current work
+- **Solution**: Specific approach to address it
+- **Impact**: Expected improvement (quantitative if possible)
+- **Libraries**: Python packages needed
+
+Be specific and actionable. Then ask: "Ready to find the best dataset for this?"""
+        
+        elif stage == 'dataset':
+            system_prompt = """You are a dataset curator. Find the BEST dataset for their research.
+
+Provide:
+- Dataset name and source
+- Size and format
+- Current SOTA performance (table with metric/score/method/year)
+- Access links (Kaggle, HuggingFace, official site)
+
+Use search to find real datasets with benchmarks. Format SOTA as markdown table.
+
+Then ask: "Shall I create your implementation checklist?"""
+        
+        elif stage == 'implementation':
+            system_prompt = """You are a technical implementation guide. Create a detailed checklist.
+
+Provide:
+1. **Requirements.txt**: All Python packages needed
+2. **Component Status Table**: 
+   - Component | Status (✅/⚠️/❌) | Notes
+3. **Next Steps**: Prioritized TODO list
+
+Be comprehensive. Include data loading, model baseline, metrics, and gap implementations.
+
+End with: "Would you like me to show you starter code for the baseline?"""
+        
+        else:
+            system_prompt = """You are an expert AI research guide. 
+
+Guide the user through creating a comprehensive research blueprint:
+1. Understand curiosity
+2. Find relevant papers  
+3. Identify research gaps
+4. Select optimal dataset
+5. Create implementation plan
+
+Ask thoughtful questions. Provide citations. Be encouraging."""
+        
+        # Build messages
         messages_to_send = [{"role": "system", "content": system_prompt}]
         
-        # Add conversation history (last 4 exchanges to keep context)
-        if request.conversation_history:
-            for msg in request.conversation_history[-8:]:
-                if msg.get("role") in ["user", "assistant"]:
-                    messages_to_send.append({
-                        "role": msg["role"],
-                        "content": msg["content"]
-                    })
+        # Add history
+        for msg in request.conversation_history[-6:]:
+            if msg.get("role") in ["user", "assistant"]:
+                messages_to_send.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
         
         # Add current message
         messages_to_send.append({"role": "user", "content": request.message})
         
-        # Call Perplexity with sonar-pro (faster, still comprehensive)
-        model = "sonar-pro"
-        
+        # Call Perplexity
         response = perplexity_client.chat.completions.create(
-            model=model,
+            model="sonar-pro",
             messages=messages_to_send,
             extra_body={
-                "search_domain_filter": ["arxiv.org", "github.com", "kaggle.com", "paperswithcode.com", "huggingface.co"]
+                "search_domain_filter": [
+                    "arxiv.org", "github.com", "kaggle.com", 
+                    "paperswithcode.com", "huggingface.co",
+                    "ieeexplore.ieee.org", "aclanthology.org"
+                ]
             }
         )
         
         content = response.choices[0].message.content
         citations = extract_citations(response)
         
-        # Store in MongoDB
+        # Store conversation
         conv_doc = {
             "session_id": request.session_id,
             "message": request.message,
             "response": content,
+            "stage": stage,
             "citations": [c.model_dump() for c in citations],
-            "is_initial": request.is_initial,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
         await db.conversations.insert_one(conv_doc)
         
+        # Check if we should show blueprint
+        show_blueprint = stage in ['dataset', 'implementation']
+        
         return ChatConverseResponse(
             response=content,
             citations=citations,
-            research_cards=[]
+            show_blueprint=show_blueprint
         )
         
     except Exception as e:
@@ -269,387 +254,117 @@ Break down complex topics into understandable explanations."""
             detail=f"Failed to process conversation: {str(e)}"
         )
 
-# Old chat/message endpoint removed - now using /chat/converse
-
-@api_router.post("/research/refine", response_model=ResearchResponse)
-async def refine_research(request: ResearchQuery):
+@api_router.post("/blueprint/generate")
+async def generate_full_blueprint(session_id: str):
     """
-    Refine a raw curiosity into a structured problem statement using Perplexity.
-    Uses Search + Sonar Chat Completions with citations.
+    Generate complete research blueprint from conversation history
     """
     try:
-        # Build system prompt for structured output
-        system_prompt = """You are a research PM. Analyze the query and return a structured JSON response with:
-        - problem_statement: A clear, concise problem statement
-        - scope: What is in scope and what is out of scope
-        - assumptions: Key assumptions being made
-        - risks: Potential risks or challenges
-        - candidate_metrics: Metrics to measure success
+        # Fetch conversation
+        conversations = await db.conversations.find(
+            {"session_id": session_id}
+        ).sort("timestamp", 1).to_list(100)
         
-        Be specific and cite sources when possible."""
+        if not conversations:
+            raise HTTPException(status_code=404, detail="No conversation found")
         
-        # Call Perplexity Sonar for research
-        extra_body = {}
-        if request.domain_filter:
-            extra_body['search_domain_filter'] = request.domain_filter
-        if request.recency_filter:
-            extra_body['search_recency_filter'] = request.recency_filter
+        # Extract all AI responses
+        full_context = "\n\n".join([
+            conv['response'] for conv in conversations 
+            if 'response' in conv
+        ])
+        
+        # Generate structured blueprint
+        system_prompt = """You are a research blueprint generator. 
+
+Given conversation history, create a COMPLETE research blueprint in this EXACT format:
+
+```markdown
+# 👤 Research Project: [Title]
+
+## Curiosity Statement
+> "[User's original interest]"
+
+## 📚 3 Most Relevant Research Papers
+
+| # | Paper | Key Contribution | Resources |
+|---|-------|------------------|-----------|
+| 1 | [Title] ([Authors], [Venue Year]) | [Contribution] | [Paper](url) · [Code](url) |
+...
+
+## 💡 Research Gaps / Future Directions
+
+### Gap 1: **[Title]**
+**Problem:** [Description]
+**Solution:** [Approach]
+**Impact:** [Expected improvement]
+**Libraries:** `lib1`, `lib2`
+
+## 📊 Dataset: [Name]
+
+### Dataset Info
+- **Source:** [Organization]
+- **Size:** [Numbers]
+- **Format:** [File types]
+
+### Current Best KPIs
+
+| Metric | Best Score | Method | Year |
+|--------|------------|--------|------|
+...
+
+### Access Links
+- **Kaggle:** [url]
+- **HuggingFace:** [url]
+
+## ✅ IMPLEMENTATION CHECKLIST
+
+### 📦 Requirements.txt
+```txt
+[packages]
+```
+
+### Status Table
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Dataset Import | ✅ COMPLETE | HF loader |
+...
+
+## 📋 NEXT STEPS
+- [ ] [Task 1]
+- [ ] [Task 2]
+```
+
+Use the conversation to fill in ALL details. Be comprehensive and structured."""
         
         response = perplexity_client.chat.completions.create(
             model="sonar-pro",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Research and refine this topic: {request.query}"}
-            ],
-            extra_body=extra_body if extra_body else None
-        )
-        
-        content = response.choices[0].message.content
-        citations = extract_citations(response)
-        
-        # Parse the response (simplified - in production, use structured outputs)
-        # For now, we'll create a structured response from the content
-        query_id = str(uuid.uuid4())
-        
-        # Store in MongoDB
-        doc = {
-            "query_id": query_id,
-            "query": request.query,
-            "content": content,
-            "citations": [c.model_dump() for c in citations],
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-        await db.queries.insert_one(doc)
-        
-        # Create structured response
-        result = ResearchResponse(
-            query_id=query_id,
-            problem_statement=f"Research focus: {request.query}",
-            scope="Analysis of current state and opportunities",
-            assumptions=["Access to current research", "Domain knowledge available"],
-            risks=["Rapidly evolving field", "Limited historical data"],
-            candidate_metrics=["Accuracy", "Performance", "Efficiency"],
-            citations=citations,
-            raw_content=content
-        )
-        
-        return result
-        
-    except Exception as e:
-        logging.error(f"Error in refine_research: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to refine research: {str(e)}"
-        )
-
-@api_router.post("/research/task-spec", response_model=TaskSpec)
-async def create_task_spec(request: TaskSpecRequest):
-    """
-    Generate a precise task specification from a refined research query.
-    """
-    try:
-        # Fetch the original query
-        query_doc = await db.queries.find_one({"query_id": request.query_id}, {"_id": 0})
-        if not query_doc:
-            raise HTTPException(status_code=404, detail="Query not found")
-        
-        system_prompt = """You are a technical project manager. Create a detailed task specification that includes:
-        - A specific task name
-        - Candidate datasets
-        - Target metrics
-        - Constraints
-        - Compute budget recommendations
-        - Deliverables
-        
-        Be concrete and actionable."""
-        
-        user_prompt = f"""Based on this research:
-        Query: {query_doc['query']}
-        
-        Create a task specification."""
-        
-        response = perplexity_client.chat.completions.create(
-            model="sonar-reasoning",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": f"Create blueprint from:\n\n{full_context}"}
             ]
         )
         
-        content = response.choices[0].message.content
-        citations = extract_citations(response)
+        blueprint = response.choices[0].message.content
         
-        task_id = str(uuid.uuid4())
-        
-        # Store in MongoDB
-        doc = {
-            "task_id": task_id,
-            "query_id": request.query_id,
-            "content": content,
-            "citations": [c.model_dump() for c in citations],
-            "timestamp": datetime.now(timezone.utc).isoformat()
+        # Store blueprint
+        blueprint_doc = {
+            "session_id": session_id,
+            "blueprint": blueprint,
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
-        await db.task_specs.insert_one(doc)
+        await db.blueprints.insert_one(blueprint_doc)
         
-        result = TaskSpec(
-            task_id=task_id,
-            query_id=request.query_id,
-            task_name=f"Task: {query_doc['query']}",
-            dataset_candidates=["Kaggle datasets", "Hugging Face datasets", "Public datasets"],
-            target_metric="Primary evaluation metric TBD",
-            constraints=["Time constraints", "Resource limits"],
-            compute_budget="Standard GPU instance",
-            deliverables=["Trained model", "Performance report", "Documentation"],
-            citations=citations
-        )
-        
-        return result
+        return {"blueprint": blueprint}
         
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Error in create_task_spec: {str(e)}")
+        logging.error(f"Error generating blueprint: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create task spec: {str(e)}"
-        )
-
-@api_router.post("/research/sota-review", response_model=SOTAReview)
-async def get_sota_review(request: SOTAReviewRequest):
-    """
-    Generate a State-of-the-Art review using academic mode.
-    """
-    try:
-        system_prompt = """You are an academic researcher. Provide a comprehensive SOTA review including:
-        - Current state of research
-        - Key findings and breakthroughs
-        - Research gaps and opportunities
-        
-        Focus on peer-reviewed sources and cite them."""
-        
-        extra_body = {
-            "search_mode": "academic"
-        }
-        if request.domain_filter:
-            extra_body['search_domain_filter'] = request.domain_filter
-        
-        response = perplexity_client.chat.completions.create(
-            model="sonar-deep-research",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Provide a SOTA review for: {request.topic}"}
-            ],
-            extra_body=extra_body
-        )
-        
-        content = response.choices[0].message.content
-        citations = extract_citations(response)
-        
-        review_id = str(uuid.uuid4())
-        
-        # Store in MongoDB
-        doc = {
-            "review_id": review_id,
-            "topic": request.topic,
-            "content": content,
-            "citations": [c.model_dump() for c in citations],
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-        await db.sota_reviews.insert_one(doc)
-        
-        result = SOTAReview(
-            review_id=review_id,
-            topic=request.topic,
-            summary=content,
-            key_findings=["Recent breakthroughs identified", "Novel approaches discovered"],
-            gaps=["Limited real-world validation", "Need for larger datasets"],
-            citations=citations
-        )
-        
-        return result
-        
-    except Exception as e:
-        logging.error(f"Error in get_sota_review: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate SOTA review: {str(e)}"
-        )
-
-@api_router.post("/research/techniques", response_model=TechniquesResponse)
-async def find_techniques(request: TechniquesRequest):
-    """
-    Search for relevant techniques using Perplexity with domain filtering.
-    """
-    try:
-        system_prompt = """You are a machine learning expert. Identify specific techniques and methods for the given problem type.
-        List concrete techniques with brief descriptions."""
-        
-        user_prompt = f"""Find techniques for:
-        Dataset type: {request.dataset_type}
-        Problem type: {request.problem_type}
-        
-        Focus on practical, proven techniques with examples from Kaggle, GitHub, and research papers."""
-        
-        response = perplexity_client.chat.completions.create(
-            model="sonar-pro",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            extra_body={
-                "search_domain_filter": ["kaggle.com", "github.com", "arxiv.org"]
-            }
-        )
-        
-        content = response.choices[0].message.content
-        citations = extract_citations(response)
-        
-        # Create technique objects
-        techniques = [
-            Technique(
-                name="Feature Engineering",
-                description="Advanced feature creation and selection",
-                category="preprocessing",
-                sources=citations[:2] if len(citations) >= 2 else citations
-            ),
-            Technique(
-                name="Ensemble Methods",
-                description="Combining multiple models for better performance",
-                category="modeling",
-                sources=citations[2:4] if len(citations) >= 4 else citations
-            )
-        ]
-        
-        return TechniquesResponse(techniques=techniques)
-        
-    except Exception as e:
-        logging.error(f"Error in find_techniques: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to find techniques: {str(e)}"
-        )
-
-@api_router.post("/research/recommend", response_model=Recommendation)
-async def recommend_technique(request: RecommendRequest):
-    """
-    Generate a final technique recommendation with evidence.
-    """
-    try:
-        # Fetch query context
-        query_doc = await db.queries.find_one({"query_id": request.query_id}, {"_id": 0})
-        if not query_doc:
-            raise HTTPException(status_code=404, detail="Query not found")
-        
-        system_prompt = """You are a data science consultant. Recommend the best technique for this specific problem.
-        Explain why it fits, expected gains, and potential risks. Provide evidence from successful implementations."""
-        
-        user_prompt = f"""Based on: {query_doc['query']}
-        Context: {request.context or 'Standard ML problem'}
-        
-        Recommend the best technique with detailed reasoning and evidence."""
-        
-        response = perplexity_client.chat.completions.create(
-            model="sonar-pro",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            extra_body={
-                "search_domain_filter": ["kaggle.com", "github.com", "arxiv.org", "youtube.com"]
-            }
-        )
-        
-        content = response.choices[0].message.content
-        citations = extract_citations(response)
-        
-        recommendation_id = str(uuid.uuid4())
-        
-        # Store in MongoDB
-        doc = {
-            "recommendation_id": recommendation_id,
-            "query_id": request.query_id,
-            "content": content,
-            "citations": [c.model_dump() for c in citations],
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-        await db.recommendations.insert_one(doc)
-        
-        result = Recommendation(
-            recommendation_id=recommendation_id,
-            technique_name="Recommended Approach",
-            why_it_fits=content[:200] + "...",
-            expected_metric_gain="5-15% improvement expected",
-            risks=["Overfitting risk", "Computational cost"],
-            evidence=citations
-        )
-        
-        return result
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logging.error(f"Error in recommend_technique: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate recommendation: {str(e)}"
-        )
-
-@api_router.get("/kaggle/datasets")
-async def search_kaggle_datasets(query: str, page: int = 1):
-    """
-    Search Kaggle datasets using CLI.
-    """
-    try:
-        # Run kaggle CLI command
-        output = run_kaggle_command(['kaggle', 'datasets', 'list', '-s', query, '--page', str(page)])
-        
-        # Parse output (simplified)
-        datasets = [
-            {
-                "title": f"Dataset: {query}",
-                "ref": f"sample-dataset-{page}",
-                "subtitle": "Sample dataset from Kaggle",
-                "size": "100MB",
-                "last_updated": "2025-01-15"
-            }
-        ]
-        
-        return {"datasets": datasets, "query": query}
-        
-    except Exception as e:
-        logging.error(f"Error searching Kaggle datasets: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to search datasets: {str(e)}"
-        )
-
-@api_router.get("/kaggle/competitions")
-async def list_kaggle_competitions(page: int = 1):
-    """
-    List Kaggle competitions using CLI.
-    """
-    try:
-        # Run kaggle CLI command
-        output = run_kaggle_command(['kaggle', 'competitions', 'list', '--page', str(page)])
-        
-        # Parse output (simplified)
-        competitions = [
-            {
-                "title": "Sample Competition",
-                "ref": "sample-comp",
-                "description": "ML competition",
-                "deadline": "2025-12-31",
-                "prize": "$10,000"
-            }
-        ]
-        
-        return {"competitions": competitions}
-        
-    except Exception as e:
-        logging.error(f"Error listing competitions: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list competitions: {str(e)}"
+            detail=f"Failed to generate blueprint: {str(e)}"
         )
 
 app.include_router(api_router)
