@@ -12,9 +12,9 @@ from datetime import datetime
 
 # Configuration
 BASE_URL = "https://notebook-forge-1.preview.emergentagent.com/api"
-SESSION_ID = "test-session-" + str(int(time.time()))
-TOPIC = "medical image classification"
-DATASET_NAME = "medical-images"
+SESSION_ID = "test-full-flow-456"
+TOPIC = "skin cancer detection with deep learning"
+DATASET_NAME = "isic-skin-cancer"
 
 def log_test(test_name, status, details=""):
     """Log test results with timestamp"""
