@@ -702,9 +702,9 @@ async def push_to_kaggle(request: NotebookRequest):
             with open(notebook_path, 'w') as f:
                 json.dump(notebook, f, indent=2)
             
-            # Create kernel metadata WITHOUT 'language' field (causes error)
+            # Create kernel metadata with proper slug format for new kernels
             metadata = {
-                "id": None,  # null for new kernels
+                "id": f"{kaggle_username}/{kernel_slug}",  # Required format: username/kernel-slug
                 "title": f"Alexandria: {request.topic[:80]}",  # Limit title length
                 "code_file": "notebook.ipynb",
                 "kernel_type": "notebook",
