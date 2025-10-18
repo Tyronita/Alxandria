@@ -16,7 +16,8 @@ import {
   Sparkles,
   Send,
   ExternalLink,
-  TrendingUp
+  TrendingUp,
+  Rocket
 } from 'lucide-react';
 import { toast } from 'sonner';
 
