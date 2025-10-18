@@ -285,12 +285,12 @@ async def generate_research_ideas(request: GenerateIdeasRequest):
 
 @api_router.post("/chat/message", response_model=ChatMessageResponse)
 async def send_chat_message(request: ChatMessageRequest):
-    \"\"\"
+    """
     Handle multi-turn conversational research refinement
-    \"\"\"
+    """
     try:
         # Build conversation context
-        system_prompt = \"\"\"You are an expert AI research assistant. Help refine the user's research idea through thoughtful questions and suggestions.
+        system_prompt = """You are an expert AI research assistant. Help refine the user's research idea through thoughtful questions and suggestions.
         
         Guide them to:
         - Clarify the problem statement
@@ -299,7 +299,7 @@ async def send_chat_message(request: ChatMessageRequest):
         - Provide citations to support recommendations
         - Help them arrive at a concrete, actionable research proposal
         
-        Be conversational, insightful, and cite sources to back your suggestions.\"\"\"
+        Be conversational, insightful, and cite sources to back your suggestions."""
         
         # Prepare message history for Perplexity
         messages_for_api = [{\"role\": \"system\", \"content\": system_prompt}]
