@@ -634,6 +634,115 @@ jupyter>=1.0.0
         headers={"Content-Disposition": "attachment; filename=requirements.txt"}
     )
 
+@api_router.post("/ship/setup-kaggle")
+async def setup_kaggle_credentials():
+    """Setup Kaggle credentials automatically"""
+    try:
+        # Create kaggle config
+        kaggle_config = {
+            "username": kaggle_username,
+            "key": kaggle_key
+        }
+        
+        # Return config as JSON
+        return {
+            "status": "success",
+            "message": "Kaggle credentials configured",
+            "config": kaggle_config,
+            "instructions": "Credentials are already set up on the server"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/ship/download-dataset")
+async def download_dataset(dataset_name: str):
+    """Download dataset from Kaggle"""
+    try:
+        logging.info(f"Downloading dataset: {dataset_name}")
+        
+        # Download using kaggle CLI
+        output = run_kaggle_command([
+            'kaggle', 'datasets', 'download', '-d', dataset_name, '-p', '/tmp'
+        ])
+        
+        return {
+            "status": "success",
+            "message": f"Dataset {dataset_name} downloaded to /tmp",
+            "output": output,
+            "download_path": f"/tmp/{dataset_name}.zip"
+        }
+    except Exception as e:
+        logging.error(f"Dataset download error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to download: {str(e)}")
+
+@api_router.post("/ship/install-requirements")
+async def install_requirements():
+    """Install Python requirements"""
+    try:
+        # Run pip install
+        result = subprocess.run(
+            ['pip', 'install', '-q', 'torch', 'torchvision', 'numpy', 'pandas', 
+             'scikit-learn', 'matplotlib', 'seaborn', 'tqdm', 'kaggle', 'jupyter'],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        
+        return {
+            "status": "success",
+            "message": "Requirements installed successfully",
+            "output": result.stdout,
+            "packages": ['torch', 'torchvision', 'numpy', 'pandas', 'scikit-learn', 
+                        'matplotlib', 'seaborn', 'tqdm', 'kaggle', 'jupyter']
+        }
+    except Exception as e:
+        logging.error(f"Installation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/ship/run-notebook")
+async def run_notebook(notebook_path: str):
+    """Execute Jupyter notebook"""
+    try:
+        # Convert and execute notebook
+        result = subprocess.run(
+            ['jupyter', 'nbconvert', '--to', 'notebook', '--execute', 
+             notebook_path, '--output', 'executed_notebook.ipynb'],
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        
+        return {
+            "status": "success",
+            "message": "Notebook executed successfully",
+            "output_path": "executed_notebook.ipynb",
+            "logs": result.stdout
+        }
+    except Exception as e:
+        logging.error(f"Notebook execution error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/ship/submit-kaggle")
+async def submit_to_kaggle(competition: str, file_path: str, message: str = "Submission from Alexandria"):
+    """Submit to Kaggle competition"""
+    try:
+        output = run_kaggle_command([
+            'kaggle', 'competitions', 'submit', 
+            '-c', competition, 
+            '-f', file_path, 
+            '-m', message
+        ])
+        
+        return {
+            "status": "success",
+            "message": "Submitted to Kaggle",
+            "competition": competition,
+            "output": output
+        }
+    except Exception as e:
+        logging.error(f"Submission error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 app.include_router(api_router)
 
 app.add_middleware(
