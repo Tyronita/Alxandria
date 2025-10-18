@@ -83,7 +83,7 @@ def run_kaggle_command(command: List[str]) -> str:
         if os.path.exists(temp_file):
             os.remove(temp_file)
 
-def generate_notebook(topic: str, dataset: str) -> dict:
+async def generate_notebook_from_research(session_id: str, topic: str, dataset: str) -> dict:
     """Generate a complete Jupyter notebook"""
     notebook = {
         "cells": [
