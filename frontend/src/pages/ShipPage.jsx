@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Download, FileText, Code, Rocket, ExternalLink, CheckCircle2, Copy } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Code, Rocket, ExternalLink, CheckCircle2, Copy, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import KaggleSetupModal from '@/components/KaggleSetupModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -16,6 +17,10 @@ export default function ShipPage() {
   const location = useLocation();
   const { topic, dataset, sessionId } = location.state || {};
   const [notebookPreview, setNotebookPreview] = useState('');
+  const [kaggleLink, setKaggleLink] = useState(null);
+  const [pushing, setPushing] = useState(false);
+  const [showKaggleSetup, setShowKaggleSetup] = useState(false);
+  const [kaggleCredentials, setKaggleCredentials] = useState(null);
 
   useEffect(() => {
     if (!topic) {
