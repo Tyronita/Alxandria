@@ -633,6 +633,13 @@ def evaluate(model, dataloader, device):
           </div>
         </div>
       </div>
+
+      {/* Kaggle Setup Modal */}
+      <KaggleSetupModal
+        isOpen={showKaggleSetup}
+        onClose={() => setShowKaggleSetup(false)}
+        onSave={handleSaveCredentials}
+      />
     </div>
   );
 }
