@@ -177,6 +177,124 @@ def test_push_to_kaggle():
         log_test("Push to Kaggle", "FAIL", f"Exception: {str(e)}")
         return False
 
+def test_notebook_download_verification():
+    """Test POST /api/ship/notebook endpoint and verify content"""
+    try:
+        payload = {
+            "session_id": SESSION_ID,
+            "topic": TOPIC,
+            "dataset_name": DATASET_NAME
+        }
+        
+        print(f"    Downloading notebook for verification...")
+        response = requests.post(f"{BASE_URL}/ship/notebook", 
+                               json=payload, 
+                               timeout=30)
+        
+        if response.status_code == 200:
+            # Check if response is JSON (notebook content)
+            try:
+                notebook_data = response.json()
+            except:
+                log_test("Notebook Download Verification", "FAIL", 
+                        "Response is not valid JSON")
+                return False
+            
+            # Check notebook structure
+            if "cells" not in notebook_data:
+                log_test("Notebook Download Verification", "FAIL", 
+                        "Notebook missing 'cells' field")
+                return False
+            
+            cells = notebook_data["cells"]
+            if not isinstance(cells, list) or len(cells) == 0:
+                log_test("Notebook Download Verification", "FAIL", 
+                        "Notebook has no cells")
+                return False
+            
+            # Find and verify research content cells
+            research_background_found = False
+            research_gaps_found = False
+            dataset_info_found = False
+            implementation_strategy_found = False
+            
+            for cell in cells:
+                if cell.get("cell_type") == "markdown" and "source" in cell:
+                    source_text = "".join(cell["source"]).lower()
+                    
+                    # Check Research Background
+                    if "research background" in source_text:
+                        research_background_found = True
+                        content_length = len("".join(cell["source"]))
+                        if content_length < 100:
+                            log_test("Notebook Download Verification", "FAIL", 
+                                    f"Research Background content too short: {content_length} chars")
+                            return False
+                        if "no research data" in source_text:
+                            log_test("Notebook Download Verification", "FAIL", 
+                                    "Research Background contains 'No research data'")
+                            return False
+                    
+                    # Check Research Gaps
+                    if "research gaps" in source_text:
+                        research_gaps_found = True
+                        content_length = len("".join(cell["source"]))
+                        if content_length < 50:
+                            log_test("Notebook Download Verification", "FAIL", 
+                                    f"Research Gaps content too short: {content_length} chars")
+                            return False
+                        if "no gaps analysis" in source_text:
+                            log_test("Notebook Download Verification", "FAIL", 
+                                    "Research Gaps contains 'No gaps analysis'")
+                            return False
+                    
+                    # Check Dataset Information
+                    if "dataset information" in source_text:
+                        dataset_info_found = True
+                        content_length = len("".join(cell["source"]))
+                        if "no datasets found" in source_text:
+                            log_test("Notebook Download Verification", "FAIL", 
+                                    "Dataset Information contains 'No datasets found'")
+                            return False
+                    
+                    # Check Implementation Strategy
+                    if "implementation strategy" in source_text:
+                        implementation_strategy_found = True
+                        content_length = len("".join(cell["source"]))
+                        if "no implementation plan" in source_text:
+                            log_test("Notebook Download Verification", "FAIL", 
+                                    "Implementation Strategy contains 'No implementation plan'")
+                            return False
+            
+            # Verify all required sections were found
+            missing_sections = []
+            if not research_background_found:
+                missing_sections.append("Research Background")
+            if not research_gaps_found:
+                missing_sections.append("Research Gaps")
+            if not dataset_info_found:
+                missing_sections.append("Dataset Information")
+            if not implementation_strategy_found:
+                missing_sections.append("Implementation Strategy")
+            
+            if missing_sections:
+                log_test("Notebook Download Verification", "FAIL", 
+                        f"Missing sections: {missing_sections}")
+                return False
+            
+            log_test("Notebook Download Verification", "PASS", 
+                    f"All research sections found with actual content, Total cells: {len(cells)}")
+            return True
+            
+        else:
+            log_test("Notebook Download Verification", "FAIL", 
+                    f"Status: {response.status_code}, Response: {response.text[:300]}")
+            return False
+            
+    except Exception as e:
+        log_test("Notebook Download Verification", "FAIL", f"Exception: {str(e)}")
+        return False
+
 def run_all_tests():
     """Run all backend tests in sequence"""
     print("=" * 60)
