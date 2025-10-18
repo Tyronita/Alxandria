@@ -10,10 +10,10 @@ import time
 import sys
 from datetime import datetime
 
-# Configuration - Using EXACT parameters from review request
+# Configuration - Using EXACT parameters from review request for SLUG FIX TEST
 BASE_URL = "https://notebook-forge-1.preview.emergentagent.com/api"
-SESSION_ID = "final-phone-verified-test"
-TOPIC = "mnist digit recognition"
+SESSION_ID = "slug-fix-final-test"
+TOPIC = "using transformers to detect illegal deforestation"  # This was failing before - testing slug fix
 DATASET_NAME = ""  # Empty dataset as requested
 
 def log_test(test_name, status, details=""):
