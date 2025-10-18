@@ -94,15 +94,17 @@ async def generate_notebook_from_research(session_id: str, topic: str, dataset: 
     
     if not research_doc:
         # Fallback to generic if no data
-        research_content = "Research data not found. Using baseline template."
-        gaps_content = ""
-        dataset_content = ""
-        implementation_content = ""
+        logging.warning(f"No research data found for session {session_id}, using template")
+        research_content = f"# Research on {topic}\n\nThis is a template notebook. Complete the research flow in Alexandria to generate a notebook with your actual research data."
+        gaps_content = "No gaps analysis available yet."
+        dataset_content = f"Dataset: {dataset}"
+        implementation_content = "Complete the implementation plan in Alexandria."
     else:
-        research_content = research_doc.get('content', '')
-        gaps_content = research_doc.get('gaps', '')
-        dataset_content = research_doc.get('datasets', '')
-        implementation_content = research_doc.get('implementation', '')
+        research_content = research_doc.get('content', 'No research content available')
+        gaps_content = research_doc.get('gaps', 'No gaps identified yet')
+        dataset_content = research_doc.get('datasets', 'No datasets found')
+        implementation_content = research_doc.get('implementation', 'No implementation plan yet')
+        logging.info(f"Loaded research data for session {session_id}: {len(research_content)} chars")
     
     notebook = {
         "cells": [
