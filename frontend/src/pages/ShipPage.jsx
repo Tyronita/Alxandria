@@ -349,6 +349,69 @@ def evaluate(model, dataloader, device):
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Downloads */}
           <div className="lg:col-span-1 space-y-4">
+            {/* Kaggle Link Card (if published) */}
+            {kaggleLink && (
+              <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  <h2 className="text-xl font-bold text-green-900">Published!</h2>
+                </div>
+                <p className="text-sm text-green-800 mb-4">
+                  Your research notebook is now live on Kaggle
+                </p>
+                <a
+                  href={kaggleLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full"
+                >
+                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white h-14">
+                    <div className="flex flex-col items-center gap-1">
+                      <ExternalLink className="w-5 h-5" />
+                      <span className="font-semibold">Open in Kaggle</span>
+                    </div>
+                  </Button>
+                </a>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(kaggleLink);
+                    toast.success('Link copied!');
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Link
+                </Button>
+              </Card>
+            )}
+            
+            <Card className="p-6">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Rocket className="w-5 h-5" />
+                Publish to Kaggle
+              </h2>
+              
+              <Button
+                onClick={handlePushToKaggle}
+                disabled={pushing || !!kaggleLink}
+                className="w-full h-16 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 mb-4"
+                data-testid="push-kaggle-btn"
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <Rocket className="w-6 h-6" />
+                  <span className="font-semibold">
+                    {pushing ? 'Publishing...' : kaggleLink ? 'Published ✓' : 'Push to Kaggle'}
+                  </span>
+                </div>
+              </Button>
+              
+              <p className="text-xs text-gray-600 text-center">
+                Creates a public Kaggle notebook with your research data
+              </p>
+            </Card>
+            
             <Card className="p-6">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Download className="w-5 h-5" />
