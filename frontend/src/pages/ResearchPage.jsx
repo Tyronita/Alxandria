@@ -84,6 +84,11 @@ export default function ResearchPage() {
 
       setMessages([userMessage, assistantMessage]);
       
+      // Update blueprint progress
+      if (response.data.show_blueprint) {
+        setShowBlueprint(true);
+      }
+      
       // Check if response mentions datasets/methods - show checklist
       if (response.data.response.toLowerCase().includes('dataset') || 
           response.data.response.toLowerCase().includes('method')) {
