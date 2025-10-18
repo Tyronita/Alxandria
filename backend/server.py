@@ -721,8 +721,8 @@ async def push_to_kaggle(request: NotebookRequest):
             
             # Create kernel metadata
             metadata = {
-                "id": kernel_id,  # Use fixed ID for updates, or new ID for creation
-                "title": f"Alexandria: {request.topic[:80]}",
+                "id": kernel_id,
+                "title": kernel_title,  # Must match slug format
                 "code_file": "notebook.ipynb",
                 "language": "python",
                 "kernel_type": "notebook",
