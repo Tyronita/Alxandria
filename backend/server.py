@@ -278,7 +278,9 @@ async def generate_research_ideas(request: GenerateIdeasRequest):
                 title=f\"Cross-Domain: {request.interests[0]} meets {request.interests[1]}\",
                 description=f\"Innovative research combining {request.interests[0].lower()} with {request.interests[1].lower()}. Leverage transfer learning and multi-task approaches to achieve breakthrough results.\",
                 tags=[request.interests[0].split()[0], request.interests[1].split()[0], \"Transfer Learning\", \"Novel\"],
-                difficulty=\"Advanced\"\n            ))\n        
+                difficulty="Advanced"
+            ))
+        
         return GenerateIdeasResponse(ideas=ideas[:5])\n        
     except Exception as e:
         logging.error(f\"Error generating ideas: {str(e)}\")\n        raise HTTPException(
