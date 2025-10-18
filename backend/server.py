@@ -309,7 +309,7 @@ async def send_chat_message(request: ChatMessageRequest):
         Be conversational, insightful, and cite sources to back your suggestions."""
         
         # Prepare message history for Perplexity
-        messages_for_api = [{\"role\": \"system\", \"content\": system_prompt}]
+        messages_for_api = [{"role": "system", "content": system_prompt}]
         
         # Add conversation history (last 6 messages for context)
         recent_messages = request.messages[-6:] if len(request.messages) > 6 else request.messages
