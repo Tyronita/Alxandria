@@ -269,70 +269,7 @@ Break down complex topics into understandable explanations."""
             detail=f"Failed to process conversation: {str(e)}"
         )
 
-# Removed old chat/message endpoint - replaced with /chat/converse
-# @api_router.post("/chat/message", response_model=ChatMessageResponse)
-# async def send_chat_message(request: ChatMessageRequest):
-    try:
-        # Build conversation context
-        system_prompt = """You are an expert AI research assistant. Help refine the user's research idea through thoughtful questions and suggestions.
-        
-        Guide them to:
-        - Clarify the problem statement
-        - Identify key challenges and opportunities
-        - Suggest relevant datasets and approaches
-        - Provide citations to support recommendations
-        - Help them arrive at a concrete, actionable research proposal
-        
-        Be conversational, insightful, and cite sources to back your suggestions."""
-        
-        # Prepare message history for Perplexity
-        messages_for_api = [{"role": "system", "content": system_prompt}]
-        
-        # Add conversation history (last 6 messages for context)
-        recent_messages = request.messages[-6:] if len(request.messages) > 6 else request.messages
-        for msg in recent_messages:
-            messages_for_api.append({
-                "role": msg.get("role"),
-                "content": msg.get("content")
-            })
-        
-        # Add current message
-        messages_for_api.append({"role": "user", "content": request.message})
-        
-        # Call Perplexity with conversation history
-        response = perplexity_client.chat.completions.create(
-            model="sonar-pro",
-            messages=messages_for_api,
-            extra_body={
-                "search_domain_filter": ["arxiv.org", "github.com", "kaggle.com", "paperswithcode.com", "huggingface.co"]
-            }
-        )
-        
-        content = response.choices[0].message.content
-        citations = extract_citations(response)
-        
-        # Store conversation in MongoDB
-        conv_doc = {
-            "conversation_id": request.conversation_id,
-            "message": request.message,
-            "response": content,
-            "citations": [c.model_dump() for c in citations],
-            "context": request.context,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-        await db.conversations.insert_one(conv_doc)
-        
-        return ChatMessageResponse(
-            response=content,
-            citations=citations
-        )
-        
-    except Exception as e:
-        logging.error(f"Error in chat message: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process message: {str(e)}"
-        )
+# Old chat/message endpoint removed - now using /chat/converse
 
 @api_router.post("/research/refine", response_model=ResearchResponse)
 async def refine_research(request: ResearchQuery):
