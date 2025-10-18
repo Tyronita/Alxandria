@@ -57,6 +57,7 @@ class NotebookRequest(BaseModel):
     session_id: str
     topic: str
     dataset_name: str
+    kaggle_credentials: Optional[Dict[str, str]] = None  # {"username": "...", "key": "..."}
 
 # ============ HELPERS ============
 
