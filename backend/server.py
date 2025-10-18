@@ -284,9 +284,11 @@ async def generate_research_ideas(request: GenerateIdeasRequest):
         return GenerateIdeasResponse(ideas=ideas[:5])
         
     except Exception as e:
-        logging.error(f\"Error generating ideas: {str(e)}\")\n        raise HTTPException(
+        logging.error(f"Error generating ideas: {str(e)}")
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f\"Failed to generate ideas: {str(e)}\"\n        )
+            detail=f"Failed to generate ideas: {str(e)}"
+        )
 
 @api_router.post("/chat/message", response_model=ChatMessageResponse)
 async def send_chat_message(request: ChatMessageRequest):
