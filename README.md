@@ -1,4 +1,4 @@
-# ResearchAI - Perplexity Hackathon Project
+#- Perplexity Hackathon Project
 
 Video and Submission
 https://devpost.com/software/alxandria
