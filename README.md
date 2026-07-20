@@ -1,5 +1,8 @@
 # ResearchAI - Perplexity Hackathon Project
 
+Video and Submission
+https://devpost.com/software/alxandria
+
 An AI-powered research assistant that transforms curiosity into structured research, complete with citations, task specifications, and actionable recommendations.
 
 ## 🌟 Features
