@@ -1,4 +1,4 @@
-#- Perplexity Hackathon Project
+## 🏆 Built for Perplexity Hackathon 2025
 
 Video and Submission
 https://devpost.com/software/alxandria
@@ -42,5 +42,3 @@ Frontend Process: `/var/log/supervisor/frontend.err.log` (or .out.log)
 - `POST /api/research/recommend` - Get evidence-based recommendations
 - `GET /api/kaggle/datasets` - Search Kaggle datasets
 - `GET /api/kaggle/competitions` - List competitions
-
-## 🏆 Built for Perplexity Hackathon 2025
