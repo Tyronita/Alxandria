@@ -1,0 +1,31 @@
+\section{Introduction}
+
+\subsection{Motivation}
+Biological evolution is often invoked metaphorically in optimization, but durable progress in evolutionary computation (EC) came from replacing metaphor with \emph{measurable} variation, selection, and inheritance under noise~\cite{eiben2015introduction,dejong2006evolutionary}.
+The same insistence on measurement now governs systems that treat large language models (LLMs) as mutation and crossover operators over code~\cite{lange2025shinka,zhang2025darwin}.
+This survey thesis asks how far one can unify three pressures---\emph{exploration} of unknown programs, \emph{exploitation} of known good parents, and \emph{safety} under incomplete verification---when the artifact being optimized is the agent itself.
+
+\subsection{Scope and methodology}
+We adopt the bounded survey protocol documented alongside this thesis (Markdown research folder): Tier~A peer-reviewed sources anchor definitions and theorems; Tier~B preprints are permitted when clearly labeled~\cite{lange2025shinka,zhang2025darwin}.
+We do not attempt exhaustive enumeration of the genetic algorithms literature; instead we emphasize historically pivotal transitions (representation shifts, ES versus GA, quality diversity) that explain today's LLM-driven archives.
+
+\subsection{Contributions of this document}
+\begin{itemize}
+  \item A mathematics-first reconstruction of mutation--selection processes linking Wright--Fisher intuition to evolutionary algorithms and regret minimization~\cite{ewens2004mathematical,lai1985asymptotically}.
+  \item A bandit-centric explanation of exploration--exploitation with a worked finite example~\cite{auer2002finite,russo2018tutorial}.
+  \item An analytic comparison of proof-gated self-modification (G\"odel machine) versus empirical validation (Darwin G\"odel Machine)~\cite{schmidhuber2007godel,zhang2025darwin}.
+  \item An implementation-grounded mapping from published algorithms to the AutoImprove codebase fork of ShinkaEvolve-style evolution.
+  \item A regime matrix recommending algorithm classes with explicit falsifiable predictions.
+\end{itemize}
+
+\subsection{Road map}
+Section~\ref{sec:prelim} fixes notation for noisy evaluation.
+Section~\ref{sec:stoch} develops Wright--Fisher drift as evolutionary intuition.
+Section~\ref{sec:selection} presents Price's covariance formulation and fitness landscapes.
+Section~\ref{sec:ga} surveys genetic algorithms and transitions toward code evolution.
+Section~\ref{sec:bandits} develops multi-armed bandits and regret minimization.
+Sections~\ref{sec:oe}--\ref{sec:rlcl} connect open-endedness, reinforcement learning, and continual learning.
+Sections~\ref{sec:llm}--\ref{sec:dgm} study LLM program evolution and the Darwin G\"odel Machine.
+Section~\ref{sec:neg} clarifies negative prompts as constraints.
+Sections~\ref{sec:synth}--\ref{sec:auto} synthesize recommendations and repository mapping.
+Section~\ref{sec:ethics} discusses evaluation hygiene and dual-use considerations.

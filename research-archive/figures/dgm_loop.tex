@@ -1,0 +1,14 @@
+\begin{tikzpicture}[
+    font=\small,
+    blk/.style={draw, rounded corners, minimum width=3cm, minimum height=1cm, align=center},
+    arr/.style={-{Stealth[length=2mm]}, thick}
+  ]
+  \node[blk] (arc) at (0,0) {Archive of agents\\$\mathcal{A}_t$};
+  \node[blk] (par) at (-4,-2.8) {Parent sampling\\(nonzero mass)};
+  \node[blk] (mod) at (0,-2.8) {Self-modify code\\(LLM edits)};
+  \node[blk] (ev) at (4,-2.8) {Benchmark eval\\SWE-bench / Polyglot};
+  \draw[arr] (arc.west) -| (par.north);
+  \draw[arr] (par) -- (mod);
+  \draw[arr] (mod) -- (ev);
+  \draw[arr] (ev.east) -- ++(0.6,0) |- (arc.east);
+\end{tikzpicture}

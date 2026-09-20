@@ -1,0 +1,21 @@
+\section{Darwin G\"odel Machine: empirical self-improvement}
+\label{sec:dgm}
+
+\subsection{Proof-gated versus benchmark-gated improvement}
+Schmidhuber's G\"odel machine seeks self-modifications that are provably beneficial~\cite{schmidhuber2007godel}.
+Full formal verification is rarely feasible for learned components or messy harness code~\cite{zhang2025darwin}.
+
+\subsection{Darwin G\"odel Machine loop}
+The Darwin G\"odel Machine maintains an archive of coding agents.
+Parents are sampled with nonzero probability to encourage stepping stones; offspring undergo empirical evaluation on repositories~\cite{zhang2025darwin}.
+Reported gains include movement from baseline scores toward stronger performance on SWE-bench variants and Polyglot~\cite{zhang2025darwin,jimenez2024swebench}.
+
+\begin{figure}[t]
+  \centering
+  \input{figures/dgm_loop}
+  \caption{Empirical self-improvement loop (original schematic inspired by published descriptions~\cite{zhang2025darwin}).}
+  \label{fig:dgm}
+\end{figure}
+
+\subsection{Safety engineering}
+Sandboxing and traceability mirror requirements for AutoImprove-style Docker isolation discussed in Section~\ref{sec:auto}.

@@ -1,0 +1,41 @@
+\section{Multi-armed bandits and regret}
+\label{sec:bandits}
+
+\subsection{Stochastic $K$-armed bandits}
+Arms $a\in\{1,\dots,K\}$ yield i.i.d.\ rewards in $[0,1]$ with unknown means $\mu_a$.
+Let $\mu^\star=\max_a \mu_a$.
+The pseudo-regret of policy $\pi$ up to horizon $T$ is
+\begin{equation}
+  \mathrm{Regret}_T(\pi)
+  = \sum_{t=1}^{T} \bigl(\mu^\star - \mu_{A_t}\bigr),
+\end{equation}
+where $A_t$ is the arm pulled at time $t$~\cite{lai1985asymptotically}.
+
+\subsection{UCB1 index policy}
+Upper confidence bounds balance empirical mean estimates with optimism proportional to uncertainty~\cite{auer2002finite}.
+A representative index is
+\begin{equation}
+  A_t \in \arg\max_{a}
+  \left(
+    \hat{\mu}_a(t-1) + \sqrt{\frac{2\ln t}{N_a(t-1)}}
+  \right),
+\end{equation}
+with tie-breaking arbitrary.
+
+\subsection{Thompson sampling}
+Maintain a Bayesian posterior over reward parameters; sample one realization per round and act greedily on the sample~\cite{russo2018tutorial,agrawal2012analysis}.
+
+\subsection{Worked micro-example}
+Consider three Bernoulli arms with means $(0.50,0.55,0.80)$.
+Uniform random exploration wastes pulls on clearly inferior arms; UCB reallocates pulls logarithmically toward ambiguity~\cite{auer2002finite}.
+
+\begin{figure}[t]
+  \centering
+  \input{figures/bandit_regret}
+  \caption{Conceptual regret accumulation: suboptimal pulls contribute linearly until confidence catches structure.}
+  \label{fig:bandit}
+\end{figure}
+
+\subsection{Bridge to evolutionary search}
+ShinkaEvolve uses bandit-style allocation across LLM endpoints when composing mutations~\cite{lange2025shinka}.
+This is an explicit algorithmic realization of exploration--exploitation beyond heuristic temperature tuning.

@@ -1,0 +1,24 @@
+\section{Genetic algorithms: a concise historical arc}
+\label{sec:ga}
+
+Holland's framework emphasized string representations, crossover, and mutation with schema-intuitive explanations~\cite{holland1975adaptation}.
+Goldberg systematized algorithm engineering practice~\cite{goldberg1989genetic}.
+Parallel communities developed evolution strategies (ES) emphasizing continuous parameter spaces and self-adaptation~\cite{hansen2001completely,beyer2002evolution}.
+
+\subsection{Modern contrasts}
+\begin{itemize}
+  \item \textbf{Multi-objective dominance}: NSGA-II remains a widely deployed baseline~\cite{deb2002fast}.
+  \item \textbf{Distribution-based search}: CMA-ES adapts full covariance of search distributions~\cite{hansen2001completely}.
+  \item \textbf{Quality diversity}: MAP-Elites archives elites across behavioral niches~\cite{mouret2015illuminating}.
+\end{itemize}
+
+\begin{figure}[t]
+  \centering
+  \input{figures/archive_tree}
+  \caption{Toy illustration of an evolutionary archive as a tree of edits (original TikZ sketch).}
+  \label{fig:archive-tree}
+\end{figure}
+
+\subsection{Transition to code evolution}
+When genotypes become programs in Turing-complete languages, syntactic constraints and semantic brittleness dominate~\cite{koza1992genetic}.
+LLM-based mutation operators bias proposals toward human-like code edits~\cite{lange2025shinka}.

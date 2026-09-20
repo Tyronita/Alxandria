@@ -1,0 +1,17 @@
+\section{Negative prompts and constrained objectives}
+\label{sec:neg}
+
+\subsection{Diffusion guidance}
+Classifier-free guidance interpolates conditional and unconditional score estimates~\cite{ho2022classifier}.
+Negative textual prompts influence sampling through learned score corrections rather than literal logical negation.
+
+\subsection{Language model steering}
+Prompt negation in natural language does not correspond to a linear operator in latent representation spaces~\cite{raffel2020exploring}.
+Constraint fulfillment often requires decoding-time filters or reinforcement from preference models.
+
+\subsection{Evolutionary analogues}
+Penalties $\lambda g(x)$, constrained MAP-Elites, and dominance constraints mirror engineering approaches for specifying forbidden behaviors~\cite{deb2002fast}.
+
+\begin{remark}[Terminology discipline]
+The phrase ``truly negative prompts'' should be defined per modality (diffusion versus autoregressive decoding versus evolutionary penalties) to avoid equivocation.
+\end{remark}

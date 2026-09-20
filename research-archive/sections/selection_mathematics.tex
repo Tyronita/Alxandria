@@ -1,0 +1,21 @@
+\section{Selection mathematics: Price and landscapes}
+\label{sec:selection}
+
+\subsection{Price equation (structural)}
+Price's covariance formulation decomposes change in average trait value into selection and transmission components~\cite{price1970selection,frank1995george}.
+For measurable trait $z_i$ and fitness $w_i$:
+\begin{equation}
+  \Delta \bar{z}
+  = \frac{\mathrm{Cov}(w_i,z_i)}{\bar{w}}
+  + \frac{\mathbb{E}[w_i\,\Delta z_i]}{\bar{w}}.
+\end{equation}
+The first term captures directional selection; the second captures mutation and inheritance biases.
+
+\subsection{Fitness landscapes}
+A genotype $g\in\mathcal{G}$ maps to fitness $F(g)$.
+Epistasis (non-additive interactions) creates multimodal landscapes where greedy hill climbing fails~\cite{mitchell1998introduction}.
+This motivates crossover (recombination), niching, and quality diversity~\cite{deb2002fast,mouret2015illuminating}.
+
+\subsection{Fisher's fundamental theorem: caution}
+Fisher's theorem has generated extensive clarification because informal statements often misrepresent scope~\cite{fisher1930genetical}.
+This thesis treats Fisher primarily as historical context and relies on formal bandit or convergence statements when precise guarantees are needed~\cite{lai1985asymptotically,auer2002finite}.

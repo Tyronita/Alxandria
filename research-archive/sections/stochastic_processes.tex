@@ -1,0 +1,20 @@
+\section{Random processes as evolutionary intuition}
+\label{sec:stoch}
+
+\subsection{Wright--Fisher drift}
+Consider a haploid population of size $N$ with two alleles.
+Let $X_t\in\{0,1/N,\dots,1\}$ denote the frequency of allele $A$.
+Under neutrality (no selection differences), classical Wright--Fisher dynamics sample parents independently:
+\begin{equation}
+  X_{t+1} = \frac{1}{N}\,\mathrm{Binomial}(N,X_t).
+\end{equation}
+$(X_t)$ is a finite-state Markov chain absorbed at $0$ or $1$.
+The expected frequency stays fixed, yet variance accumulates until fixation---\emph{genetic drift}~\cite{ewens2004mathematical,durrett2008probability}.
+
+\begin{remark}[Evolutionary analogy]
+Finite populations in evolutionary algorithms exhibit analogous ``allele frequency'' drift in schema proportions when selection pressure is weak relative to mutation~\cite{goldberg1989genetic}.
+\end{remark}
+
+\subsection{Branching and extinction}
+Galton--Watson branching processes provide another pre-biological mental model: novel partial solutions may flourish or die before adoption~\cite{durrett2008probability}.
+Quality diversity methods attempt to preserve partially successful lineages explicitly~\cite{mouret2015illuminating}.

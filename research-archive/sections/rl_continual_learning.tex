@@ -1,0 +1,18 @@
+\section{Reinforcement learning, evolution, and continual learning}
+\label{sec:rlcl}
+
+\subsection{Where gradients win}
+When simulators are differentiable or highly sample-efficient model-based RL applies, policy gradients and value-based methods dominate~\cite{sutton2018reinforcement}.
+Self-play exemplifies closed-loop non-stationarity handled by curriculum emergence~\cite{silver2017mastering}.
+
+\subsection{Where evolution wins}
+Parallel rollouts and non-differentiable objectives align with evolutionary strategies~\cite{such2017deep}.
+Population-based training mixes populations of RL agents with evolutionary hyperparameter adaptation~\cite{jaderberg2017population}.
+
+\subsection{Continual learning}
+Continual learning addresses catastrophic forgetting under distribution shift~\cite{kirkpatrick2017overcoming,delange2021continual,zeno2024continual}.
+Non-stationary evolutionary evaluations resemble continual learning when benchmarks drift or agents self-edit evaluation harnesses~\cite{zhang2025darwin}.
+
+\begin{remark}[Coupling concerns]
+When the agent modifies its own tooling, evaluation non-stationarity may dominate biological-style drift effects from Section~\ref{sec:stoch}.
+\end{remark}

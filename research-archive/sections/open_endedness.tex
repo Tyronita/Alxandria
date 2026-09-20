@@ -1,0 +1,21 @@
+\section{Open-endedness and quality diversity}
+\label{sec:oe}
+
+\subsection{Novelty search}
+Novelty search replaces objective fitness with novelty relative to an archive~\cite{lehman2011novelty}.
+This can escape deceptive objectives when novelty correlates with discovering stepping stones.
+
+\subsection{MAP-Elites}
+MAP-Elites maintains the highest-performing solution found for each cell of a behavior descriptor grid~\cite{mouret2015illuminating}.
+The resulting archive approximates a diversity--performance Pareto front under discretization~\cite{pugh2016quality}.
+
+\subsection{POET-style co-evolution}
+Coupled generation of environments and agents illustrates open-ended expansion of challenge distributions~\cite{wang2019paired}.
+Recent conceptual work reframes open-endedness via sequences of learnable artifacts~\cite{hughes2024open}.
+
+\subsection{Intrinsic motivation}
+Developmental learning perspectives motivate curiosity as compression progress~\cite{oudeyer2007intrinsic}.
+
+\begin{remark}[Descriptor design risk]
+QD methods fail when descriptors omit axes along which stepping stones align~\cite{ecoffet2019go}.
+\end{remark}

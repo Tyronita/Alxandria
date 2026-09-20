@@ -1,0 +1,18 @@
+\section{LLMs as mutation operators in program evolution}
+\label{sec:llm}
+
+\subsection{ShinkaEvolve}
+ShinkaEvolve introduces three coupled mechanisms~\cite{lange2025shinka}:
+\begin{enumerate}
+  \item \textbf{Parent sampling} balancing exploration and exploitation over archived programs.
+  \item \textbf{Code novelty rejection sampling} to avoid redundant proposals.
+  \item \textbf{Bandit-based LLM ensemble selection} adapting operator choice online.
+\end{enumerate}
+
+\subsection{Automated design of agentic systems (ADAS)}
+ADAS meta-searches code-defined agents using an archive of discoveries~\cite{hu2025adas}.
+Compared with ShinkaEvolve, emphasis shifts toward discovering agent \emph{modules} rather than low-level numerical kernels~\cite{romera2024mathematical}.
+
+\subsection{Relation to classical EC}
+LLMs induce strongly biased mutation kernels concentrated on human-like edits.
+Population diversity therefore depends on archive policies and stochastic sampling rather than bitwise mutation alone~\cite{lange2025shinka}.

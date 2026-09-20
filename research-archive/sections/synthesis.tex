@@ -1,0 +1,31 @@
+\section{Synthesis: algorithm classes for self-evolving agents}
+\label{sec:synth}
+
+Table~\ref{tab:matrix} summarizes regimes discussed throughout this thesis.
+Each row pairs structural assumptions with an algorithm family and a failure mode.
+
+\begin{table}[t]
+  \centering
+  \caption{Regime-based recommendations (informal but actionable).}
+  \label{tab:matrix}
+  \small
+  \begin{tabular}{p{0.22\linewidth}p{0.18\linewidth}p{0.22\linewidth}p{0.28\linewidth}}
+    \hline
+    Structure & Budget & Preferred class & If assumptions fail \\
+    \hline
+    Differentiable simulator & Medium--high & PBT / RL~\cite{jaderberg2017population} & Exploitability, instability \\
+    Parallel black-box scores & High & ES / CMA-ES~\cite{hansen2001completely} & Non-stationary noise \\
+    Program + tests & Medium & LLM archive evolution~\cite{lange2025shinka} & Goodharting tests \\
+    Self-edit equals task & High & DGM-style validation~\cite{zhang2025darwin} & Benchmark leakage \\
+    Deceptive objectives & Medium--high & MAP-Elites / novelty~\cite{mouret2015illuminating,lehman2011novelty} & Bad descriptors \\
+    Distribution shift & Medium & Continual learning~\cite{zeno2024continual} & Negative transfer \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Falsifiable predictions}
+\begin{enumerate}
+  \item Bandit-style parent allocation lowers variance of best-found fitness versus truncation selection under Bernoulli evaluation noise~\cite{auer2002finite,lange2025shinka}.
+  \item Archives outperform ``latest-only'' self-modification when destructive edits have positive probability~\cite{zhang2025darwin}.
+  \item MAP-Elites aids deceptive tasks only when behavior descriptors align with productive stepping stones~\cite{mouret2015illuminating}.
+\end{enumerate}

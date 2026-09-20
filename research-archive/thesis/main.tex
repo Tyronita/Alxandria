@@ -1,0 +1,80 @@
+%%
+%% Master's survey thesis draft — ACM Computing Surveys style (acmsurvey).
+%% Build: latexmk -pdf main.tex  (from this directory)
+%%
+\documentclass[acmsurvey,manuscript,screen,nonacm]{acmart}
+
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+
+\setcopyright{none}
+\copyrightyear{2026}
+\acmYear{2026}
+
+\title[Open-endedness]{Open-endedness: The Beginning of Unwritten Worlds}
+\subtitle{A Survey from Genetic Algorithms to Self-Evolving Agents}
+\author{Evolve Project}
+\email{author@example.edu}
+\affiliation{%
+  \institution{Your Institution}
+  \department{Your Department}
+  \city{Your City}
+  \country{Your Country}}
+
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10010147.10010257</concept_id>
+<concept_desc>Computing methodologies~Machine learning</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
+\ccsdesc[500]{Computing methodologies~Machine learning}
+
+\keywords{%
+  genetic algorithms,
+  evolutionary computation,
+  multi-armed bandits,
+  quality diversity,
+  continual learning,
+  self-improving AI,
+  Darwin G\"odel Machine,
+  ShinkaEvolve}
+
+\begin{document}
+
+\begin{abstract}
+This survey traces a line from classical evolutionary computation and population genetics-style mathematics to modern \emph{open-ended} systems in which programs and agents evolve under stochastic evaluation.
+We develop multi-armed bandits and regret minimization as the quantitative language for exploration--exploitation, connect novelty search and MAP-Elites quality diversity to stepping-stone discovery, and relate continual learning's stability--plasticity tension to non-stationary evolutionary evaluations.
+We analyze two contemporary ``LLM-as-operator'' systems---ShinkaEvolve (sample-efficient program evolution) and the Darwin G\"odel Machine (empirically validated self-modifying coding agents)---and map their engineering commitments to an open-source fork (AutoImprove) that couples evolutionary loops with sandboxed evaluation.
+The thesis emphasizes definitional clarity (especially for ``negative prompts'' as constraints), cites primary literature throughout, and closes with a regime-based matrix recommending algorithm families for self-evolving agents together with falsifiable predictions.
+\end{abstract}
+
+\maketitle
+
+\input{sections/introduction}
+\input{sections/preliminaries}
+\input{sections/stochastic_processes}
+\input{sections/selection_mathematics}
+\input{sections/genetic_algorithms_history}
+\input{sections/multi_armed_bandits}
+\input{sections/open_endedness}
+\input{sections/rl_continual_learning}
+\input{sections/llm_program_evolution}
+\input{sections/darwin_goedel_machine}
+\input{sections/negative_prompts}
+\input{sections/synthesis}
+\input{sections/autoimprove_mapping}
+\input{sections/ethics}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

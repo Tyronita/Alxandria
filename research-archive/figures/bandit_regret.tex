@@ -1,0 +1,11 @@
+\begin{tikzpicture}[
+    font=\footnotesize,
+    axis/.style={-{Stealth[length=2mm]}},
+    regret/.style={thick, blue!70!black}
+  ]
+  \draw[axis] (0,0) -- (6.5,0) node[below] {$t$};
+  \draw[axis] (0,0) -- (0,3.2) node[left] {cumulative regret};
+  \draw[regret, smooth] plot coordinates {(0.4,0.15)(1,0.55)(2,1.05)(3,1.45)(4,1.85)(5,2.2)(6.2,2.65)};
+  \draw[dashed, gray] (0,0) -- (6.3,2.95);
+  \node[align=left] at (5.2,2.5) {\textcolor{gray}{linear if}\\\textcolor{gray}{always bad}};
+\end{tikzpicture}

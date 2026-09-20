@@ -1,0 +1,24 @@
+\section{Preliminaries and noisy optimization}
+\label{sec:prelim}
+
+Let $(\Omega,\mathcal{F},\mathbb{P})$ denote a probability space carrying all randomness of evaluation (compute nondeterminism, flaky tests, LLM sampling).
+A \emph{candidate} program $c$ produces a random objective observation
+\begin{equation}
+  Y(c) = f(c) + \varepsilon(c),
+\end{equation}
+where $f(c)$ is an interpretable score (e.g., mean pass rate) and $\varepsilon(c)$ aggregates measurement noise.
+Evolutionary algorithms that repeatedly \emph{resample} the same candidate inherit variance both from $\varepsilon$ and from finite-population sampling~\cite{eiben2015introduction}.
+
+\begin{remark}[Optimization versus identification]
+Bandit analyses emphasize \emph{cumulative regret} while evolutionary competitions often emphasize \emph{final champion} performance.
+Translating between these goals requires stating whether the training budget $T$ is large compared to mixing times of the underlying Markov chain induced by variation operators~\cite{sutton2018reinforcement}.
+\end{remark}
+
+\begin{figure}[t]
+  \centering
+  \input{figures/ea_loop}
+  \caption{Canonical evolutionary loop with noisy fitness oracle $Y(\cdot)$.}
+  \label{fig:ea-loop}
+\end{figure}
+
+Figure~\ref{fig:ea-loop} emphasizes that sandbox fidelity determines whether $Y$ approximates intended deployment fitness---a central theme when agents gain tool access~\cite{zhang2025darwin}.

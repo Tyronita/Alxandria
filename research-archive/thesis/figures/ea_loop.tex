@@ -1,0 +1,15 @@
+% Requires tikz in preamble
+\begin{tikzpicture}[
+    font=\small,
+    box/.style={draw, rounded corners, minimum width=2.6cm, minimum height=0.85cm, align=center},
+    arr/.style={-{Stealth[length=2mm]}, thick}
+  ]
+  \node[box] (pop) at (0,0) {Population\\$P_t$};
+  \node[box] (var) at (4,0) {Variation\\mutation / crossover};
+  \node[box] (eval) at (8,0) {Evaluation\\$Y(\cdot)$};
+  \node[box] (sel) at (4,-2.2) {Selection};
+  \draw[arr] (pop) -- (var);
+  \draw[arr] (var) -- (eval);
+  \draw[arr] (eval.east) -- ++(0.6,0) |- (sel.east);
+  \draw[arr] (sel.west) -- ++(-0.6,0) |- (pop.west);
+\end{tikzpicture}

@@ -1,0 +1,19 @@
+\section{Repository mapping: AutoImprove}
+\label{sec:auto}
+
+AutoImprove extends Shinka-style evolution with RunPod GPU compute, OpenRouter LLM access, Docker sandboxes, and a management portal (project \texttt{README.md}).
+This section maps published mechanisms to Python modules.
+
+\subsection{\texttt{autoimprove/core/evolution.py}}
+\texttt{MutationOperator} wraps LLM generation and extracts executable code from model outputs.
+\texttt{EvolutionEngine.\_select\_parents} ranks candidates by \texttt{combined\_score} and retains top performers---an exploitation-heavy policy complementing bandit methods in ShinkaEvolve~\cite{lange2025shinka}.
+Configuration flags \texttt{archive\_enabled} and \texttt{novelty\_detection} anticipate parity with novelty rejection pipelines.
+
+\subsection{\texttt{autoimprove/core/evaluator.py}}
+\texttt{Evaluator} aggregates repeated stochastic evaluations (multiple runs, timeouts), reflecting noisy fitness observations formalized in Section~\ref{sec:prelim}.
+
+\subsection{\texttt{autoimprove/core/orchestrator.py}}
+\texttt{Orchestrator.run\_evolution} budgets API cost (\texttt{max\_api\_cost}), invokes Docker or RunPod evaluation, and tracks champion candidates---engineering correlates of sandboxed self-improvement~\cite{zhang2025darwin}.
+
+\subsection{Gap analysis}
+Instantiating Darwin G\"odel Machine-level self-referential evaluation requires coupling benchmarks directly to an agent's capacity to modify its own repository---beyond generic task evaluations wired by default configurations.
